@@ -10,12 +10,18 @@
     .container { max-width: 800px; margin: 0 auto; padding: 2rem 1.25rem; }
     h1 { font-size: 1.75rem; font-weight: 700; color: #f8fafc; margin-bottom: 0.5rem; }
     .subtitle { color: #94a3b8; margin-bottom: 2rem; font-size: 0.95rem; }
-    .toolbar { display: flex; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: center; }
+    .password-gate { max-width: 420px; margin: 4rem auto; background: #1e293b; border: 1px solid #334155; border-radius: 16px; padding: 2rem; text-align: center; }
+    .password-gate h2 { color: #f8fafc; font-size: 1.2rem; margin-bottom: 0.5rem; }
+    .password-gate p { color: #94a3b8; font-size: 0.85rem; margin-bottom: 1.5rem; line-height: 1.5; }
+    .password-input { width: 100%; background: #0f172a; border: 2px solid #334155; border-radius: 10px; color: #e2e8f0; padding: 0.85rem 1rem; font-size: 1rem; font-family: inherit; outline: none; transition: border-color 0.18s; text-align: center; margin-bottom: 1rem; }
+    .password-input:focus { border-color: #3b82f6; }
+    .password-error { color: #ef4444; font-size: 0.8rem; margin-bottom: 1rem; display: none; }
     .btn { padding: 0.65rem 1.2rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; border: none; }
     .btn-primary { background: #3b82f6; color: white; }
     .btn-primary:hover { background: #2563eb; }
     .btn-secondary { background: #334155; color: #94a3b8; }
     .btn-secondary:hover { background: #475569; }
+    .toolbar { display: flex; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: center; }
     .count-badge { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 0.5rem 1rem; font-size: 0.85rem; color: #94a3b8; }
     .count-badge strong { color: #3b82f6; }
     .loading { color: #94a3b8; font-size: 1rem; text-align: center; padding: 3rem; }
@@ -36,38 +42,121 @@
     .filter-chip { background: #1e293b; border: 1px solid #334155; color: #94a3b8; padding: 0.35rem 0.9rem; border-radius: 999px; font-size: 0.8rem; cursor: pointer; transition: all 0.15s; }
     .filter-chip:hover { border-color: #3b82f6; color: #e2e8f0; }
     .filter-chip.active { border-color: #3b82f6; background: rgba(59,130,246,0.15); color: #93c5fd; }
+    .decrypt-bar { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 0.75rem 1rem; margin-bottom: 1rem; display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
+    .decrypt-bar span { color: #94a3b8; font-size: 0.8rem; }
+    .decrypt-bar input { background: #0f172a; border: 1px solid #334155; border-radius: 6px; color: #e2e8f0; padding: 0.4rem 0.75rem; font-size: 0.85rem; font-family: inherit; outline: none; flex: 1; min-width: 180px; }
+    .decrypt-bar input:focus { border-color: #3b82f6; }
   </style>
 </head>
 <body>
 <div class="container">
   <h1>📊 Umfrage-Ergebnisse</h1>
-  <p class="subtitle">Alle Antworten aus der Handball-App Umfrage</p>
+  <p class="subtitle">Handball-App Anforderungsanalyse — verschlüsselt gespeichert</p>
 
-  <div class="toolbar">
-    <button class="btn btn-primary" onclick="loadResults()">🔄 Aktualisieren</button>
-    <button class="btn btn-secondary" onclick="exportCSV()">📥 Als CSV exportieren</button>
-    <div class="count-badge"><strong id="totalCount">0</strong> Antworten</div>
+  <!-- Password Gate -->
+  <div class="password-gate" id="passwordGate">
+    <h2>🔒 Ergebnisse ansehen</h2>
+    <p>Gib das gemeinsame Passwort ein, um die verschlüsselten Antworten zu entschlüsseln.</p>
+    <input class="password-input" id="pwInput" type="password" placeholder="Passwort eingeben..." onkeydown="if(event.key==='Enter')tryDecrypt()">
+    <div class="password-error" id="pwError">Falsches Passwort — bitte erneut versuchen.</div>
+    <button class="btn btn-primary" onclick="tryDecrypt()" style="width:100%">Entschlüsseln & Laden</button>
+    <p style="margin-top:1rem;font-size:0.75rem;color:#475569">Erstmalige Nutzung? Frage Michael nach dem Passwort.</p>
   </div>
 
-  <div class="filter-row" id="roleFilters"></div>
-  <div id="resultsList">
-    <div class="loading">Lade Ergebnisse...</div>
+  <!-- Dashboard (hidden until decrypted) -->
+  <div id="dashboard" style="display:none">
+    <div class="decrypt-bar">
+      <span>🔑 Passwort:</span>
+      <input type="password" id="pwChange" placeholder="Passwort ändern..." onkeydown="if(event.key==='Enter')changePw()">
+      <button class="btn btn-primary" onclick="changePw()" style="padding:0.4rem 1rem">Neu laden</button>
+    </div>
+    <div class="toolbar">
+      <button class="btn btn-primary" onclick="refreshResults()">🔄 Aktualisieren</button>
+      <button class="btn btn-secondary" onclick="exportCSV()">📥 Als CSV exportieren</button>
+      <div class="count-badge"><strong id="totalCount">0</strong> Antworten</div>
+    </div>
+    <div class="filter-row" id="roleFilters"></div>
+    <div id="resultsList">
+      <div class="loading">Lade Ergebnisse...</div>
+    </div>
   </div>
 </div>
 
 <script>
 const FIREBASE_URL = 'https://handball-385a3-default-rtdb.europe-west1.firebasedatabase.app';
-let allResults = [];
+let currentPassword = '';
+let decryptedResults = [];
+let rawResults = [];
 let activeFilter = 'all';
 
-async function loadResults() {
+// ─── Crypto Utils ─────────────────────────────────────────────────────────────
+async function deriveKey(password, salt) {
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt']
+  );
+}
+
+async function decryptData(ciphertextB64, password) {
+  try {
+    const combined = Uint8Array.from(atob(ciphertextB64), c => c.charCodeAt(0));
+    const salt = combined.slice(0, 16);
+    const iv = combined.slice(16, 28);
+    const ciphertext = combined.slice(28);
+    const key = await deriveKey(password, salt);
+    const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertext);
+    return JSON.parse(new TextDecoder().decode(decrypted));
+  } catch(e) {
+    return null;
+  }
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ─── Load & Decrypt ────────────────────────────────────────────────────────────
+async function tryDecrypt() {
+  const pw = document.getElementById('pwInput').value;
+  if (!pw) return;
+  currentPassword = pw;
+  document.getElementById('pwError').style.display = 'none';
+
   const list = document.getElementById('resultsList');
-  list.innerHTML = '<div class="loading">Lade von Firebase...</div>';
+  list.innerHTML = '<div class="loading">Lade verschlüsselte Daten von Firebase...</div>';
+
   try {
     const res = await fetch(FIREBASE_URL + '/results.json');
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
-    allResults = data ? Object.entries(data).map(([k, v]) => ({ id: k, ...v })).sort((a,b) => b.timestamp - a.timestamp) : [];
+    rawResults = data ? Object.entries(data).map(([k,v]) => ({ id: k, ...v })).sort((a,b) => b.timestamp - a.timestamp) : [];
+
+    // Decrypt all entries
+    decryptedResults = [];
+    for (const entry of rawResults) {
+      if (entry.encrypted) {
+        const decrypted = await decryptData(entry.encrypted, pw);
+        if (decrypted) {
+          decryptedResults.push({ ...decrypted, _id: entry.id, _timestamp: entry.timestamp || decrypted.timestamp });
+        }
+      }
+    }
+
+    if (decryptedResults.length === 0 && rawResults.length > 0) {
+      document.getElementById('pwError').style.display = 'block';
+      document.getElementById('pwError').textContent = 'Falsches Passwort — die Daten konnten nicht entschlüsselt werden.';
+      list.innerHTML = '<div class="loading">Entschlüsselung fehlgeschlagen — falsches Passwort?</div>';
+      return;
+    }
+
+    // Success
+    document.getElementById('passwordGate').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
     renderFilters();
     renderResults();
   } catch(err) {
@@ -75,9 +164,39 @@ async function loadResults() {
   }
 }
 
+async function refreshResults() {
+  if (!currentPassword) return;
+  const list = document.getElementById('resultsList');
+  list.innerHTML = '<div class="loading">Aktualisiere...</div>';
+  try {
+    const res = await fetch(FIREBASE_URL + '/results.json');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    rawResults = data ? Object.entries(data).map(([k,v]) => ({ id: k, ...v })).sort((a,b) => b.timestamp - a.timestamp) : [];
+    decryptedResults = [];
+    for (const entry of rawResults) {
+      if (entry.encrypted) {
+        const decrypted = await decryptData(entry.encrypted, currentPassword);
+        if (decrypted) decryptedResults.push({ ...decrypted, _id: entry.id, _timestamp: entry.timestamp || decrypted.timestamp });
+      }
+    }
+    renderFilters();
+    renderResults();
+  } catch(err) {
+    list.innerHTML = '<div class="error">Fehler: ' + err.message + '</div>';
+  }
+}
+
+async function changePw() {
+  const newPw = document.getElementById('pwChange').value.trim();
+  if (!newPw) return;
+  currentPassword = newPw;
+  await refreshResults();
+}
+
 function renderFilters() {
   const allRoles = new Set();
-  allResults.forEach(r => (r.roles||[]).forEach(role => allRoles.add(role)));
+  decryptedResults.forEach(r => (r.roles||[]).forEach(role => allRoles.add(role)));
   const filterRow = document.getElementById('roleFilters');
   filterRow.innerHTML = '<div class="filter-chip ' + (activeFilter==='all'?'active':'') + '" onclick="setFilter(\'all\')">Alle</div>';
   filterRow.innerHTML += [...allRoles].sort().map(r => '<div class="filter-chip ' + (activeFilter===r?'active':'') + '" onclick="setFilter(\'' + r + '\')">' + r + '</div>').join('');
@@ -93,7 +212,7 @@ function setFilter(role) {
 
 function renderResults() {
   const list = document.getElementById('resultsList');
-  const filtered = activeFilter === 'all' ? allResults : allResults.filter(r => (r.roles||[]).includes(activeFilter));
+  const filtered = activeFilter === 'all' ? decryptedResults : decryptedResults.filter(r => (r.roles||[]).includes(activeFilter));
   document.getElementById('totalCount').textContent = filtered.length;
   if (filtered.length === 0) {
     list.innerHTML = '<div class="empty">Noch keine Ergebnisse' + (activeFilter !== 'all' ? ' für "' + activeFilter + '"' : '') + '.</div>';
@@ -101,7 +220,8 @@ function renderResults() {
   }
   const appTypeLabel = { app: '📱 App', web: '🌐 Web', beides: '🔀 Beides' };
   list.innerHTML = filtered.map(r => {
-    const date = new Date(r.timestamp);
+    const ts = r._timestamp || r.timestamp;
+    const date = new Date(ts);
     const timeStr = date.toLocaleDateString('de-DE') + ' ' + date.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
     const answers = Object.entries(r.answers || {}).map(([k,v]) => '<div class="entry-answer"><strong>' + k + ':</strong> ' + (Array.isArray(v) ? v.join(', ') : v) + '</div>').join('');
     return '<div class="result-entry">' +
@@ -118,11 +238,11 @@ function renderResults() {
 }
 
 function exportCSV() {
-  if (allResults.length === 0) return alert('Keine Daten zum Exportieren.');
+  if (decryptedResults.length === 0) return alert('Keine Daten zum Exportieren.');
   const rows = [['Timestamp','Name','Rollen','AppType','Feedback']];
-  allResults.forEach(r => {
+  decryptedResults.forEach(r => {
     rows.push([
-      new Date(r.timestamp).toLocaleString('de-DE'),
+      new Date(r._timestamp || r.timestamp).toLocaleString('de-DE'),
       (r.name||''),
       (r.roles||[]).join('; '),
       r.appType || '',
@@ -135,13 +255,6 @@ function exportCSV() {
   const a = document.createElement('a'); a.href = url; a.download = 'handball-umfrage.csv'; a.click();
   URL.revokeObjectURL(url);
 }
-
-function escHtml(str) {
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
-loadResults();
-setInterval(loadResults, 30000);
 </script>
 </body>
 </html>
