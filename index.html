@@ -32,6 +32,8 @@
     .name-input { width: 100%; background: #1e293b; border: 2px solid #334155; border-radius: 10px; color: #e2e8f0; padding: 0.75rem 1rem; font-size: 0.95rem; font-family: inherit; outline: none; transition: border-color 0.18s; }
     .name-input:focus { border-color: #3b82f6; }
     .name-input::placeholder { color: #475569; }
+    .privacy-note { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 0.75rem 1rem; font-size: 0.75rem; color: #64748b; margin-bottom: 1rem; line-height: 1.5; }
+    .privacy-note a { color: #3b82f6; }
     .role-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.6rem; margin-bottom: 0.5rem; }
     .role-card { padding: 0.85rem 0.5rem; background: #1e293b; border: 2px solid #334155; border-radius: 12px; cursor: pointer; text-align: center; transition: all 0.18s; appearance: none; -webkit-appearance: none; font-family: inherit; border-style: solid; outline: none; }
     .role-card:hover { border-color: #3b82f6; }
@@ -75,6 +77,9 @@
     <div class="question">Wie heißt du?</div>
     <div class="name-input-wrap">
       <input class="name-input" id="nameInput" type="text" placeholder="Dein Name (oder einfach leer lassen)" autocomplete="off">
+    </div>
+    <div class="privacy-note">
+      🔒 <strong>Datenschutz:</strong> Deine Antworten werden anonym in Firebase gespeichert. Keine personenbezogenen Daten ohne deine Einwilligung.
     </div>
     <div class="step-label" style="margin-top:1rem">Frage 2 — Rollen</div>
     <div class="question">Welche Rolle(n) hast du im Verein?</div>
@@ -207,7 +212,7 @@ const QUESTIONS = [
 
 // ─── State ────────────────────────────────────────────────────────────────────
 const STORAGE_KEY = 'hb-survey-v3';
-const state = { name: '', ip: '', roles: [], answers: {}, appType: '', feedback: '' };
+const state = { name: '', roles: [], answers: {}, appType: '', feedback: '' };
 let totalDynamicSteps = 0;
 let currentDynamicIdx = 0;
 let dynamicQuestions = [];
@@ -353,20 +358,9 @@ async function finishSurvey() {
 
   state.feedback = document.getElementById('feedback').value.trim();
 
-  // Fetch IP if no name given
-  let ip = '';
-  if (!state.name) {
-    try {
-      const ipRes = await fetch('https://api.ipify.org?format=json');
-      const ipData = await ipRes.json();
-      ip = ipData.ip || '';
-      state.ip = ip;
-    } catch(e) {}
-  }
-
   // Build result display
   const appTypeLabel = { app: '📱 Eigene App', web: '🌐 Web-App', beides: '🔀 Beides' };
-  const displayName = state.name || (ip ? 'Gast (' + ip + ')' : 'Anonym');
+  const displayName = state.name || 'Anonym';
   let answerHtml = '';
   dynamicQuestions.forEach(q => {
     const ans = state.answers[q.id];
@@ -385,8 +379,7 @@ async function finishSurvey() {
   // Firebase: POST result
   try {
     const payload = {
-      name: state.name || ('Gast-' + (ip || Date.now())),
-      ip: ip,
+      name: state.name || 'Anonym',
       roles: state.roles,
       answers: state.answers,
       appType: state.appType,
@@ -428,7 +421,7 @@ function copyAll() {
 }
 
 function resetAll() {
-  state.roles = []; state.answers = {}; state.appType = ''; state.feedback = ''; state.ip = '';
+  state.roles = []; state.answers = {}; state.appType = ''; state.feedback = '';
   dynamicQuestions = []; currentDynamicIdx = 0; totalDynamicSteps = 0;
   document.querySelectorAll('.role-card, .option').forEach(el => el.classList.remove('selected'));
   document.querySelectorAll('input').forEach(i => i.checked = false);
