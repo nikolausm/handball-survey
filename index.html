@@ -316,7 +316,7 @@ function renderDynamicQuestion() {
   const optsHtml = q.options.map(o => {
     const inputType = isRadio ? 'radio' : 'checkbox';
     const tag = isRadio ? 'toggleAnswer' : 'toggleMulti';
-    return `<label class="option" onclick="${tag}('${q.id}','${o.v}',this)">
+    return `<label class="option" onclick="${tag}('${q.id}','${o.v}',this,event)">
       <input type="${inputType}" name="${q.id}" value="${o.v}"><div class="check-box"></div>
       <div><div class="option-text">${o.v}</div>${o.d ? '<div class="option-desc">' + o.d + '</div>' : ''}</div>
     </label>`;
@@ -343,13 +343,17 @@ function toggleAnswer(qId, value, el) {
   enableBtn('dynBtn');
 }
 
-function toggleMulti(qId, value, el) {
+function toggleMulti(qId, value, el, event) {
+  if (event) event.stopPropagation();
   const input = el.querySelector('input');
   input.checked = !input.checked;
   el.classList.toggle('selected', input.checked);
   if (!state.answers[qId]) state.answers[qId] = [];
-  if (input.checked) state.answers[qId].push(value);
-  else state.answers[qId] = state.answers[qId].filter(v => v !== value);
+  if (input.checked) {
+    if (!state.answers[qId].includes(value)) state.answers[qId].push(value);
+  } else {
+    state.answers[qId] = state.answers[qId].filter(v => v !== value);
+  }
   const btn = document.getElementById('dynBtn');
   if (state.answers[qId].length > 0) btn.classList.remove('btn-disabled');
   else btn.classList.add('btn-disabled');
