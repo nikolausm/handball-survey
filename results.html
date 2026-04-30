@@ -21,12 +21,13 @@
     .loading { color: #94a3b8; font-size: 1rem; text-align: center; padding: 3rem; }
     .error { color: #ef4444; background: rgba(239,68,68,0.1); border: 1px solid #ef4444; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
     .result-entry { background: #1e293b; border: 1px solid #334155; border-radius: 14px; padding: 1.25rem; margin-bottom: 1rem; }
-    .entry-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem; }
-    .entry-roles { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .entry-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem; }
+    .entry-name { font-weight: 700; color: #f1f5f9; font-size: 1rem; }
+    .entry-roles { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.5rem; }
     .chip { background: rgba(59,130,246,0.15); color: #93c5fd; padding: 0.25rem 0.7rem; border-radius: 999px; font-size: 0.8rem; }
     .chip.app { background: rgba(16,185,129,0.15); color: #6ee7b7; }
-    .entry-time { font-size: 0.75rem; color: #475569; }
-    .entry-answers { margin-top: 0.75rem; }
+    .entry-time { font-size: 0.75rem; color: #475569; margin-top: 0.5rem; }
+    .entry-answers { margin-top: 0.5rem; }
     .entry-answer { font-size: 0.85rem; color: #94a3b8; margin-bottom: 0.3rem; }
     .entry-answer strong { color: #e2e8f0; }
     .entry-feedback { margin-top: 0.75rem; background: #0f172a; border-radius: 8px; padding: 0.75rem; font-size: 0.85rem; color: #94a3b8; font-style: italic; line-height: 1.5; }
@@ -76,7 +77,7 @@ async function loadResults() {
 
 function renderFilters() {
   const allRoles = new Set();
-  allResults.forEach(r => r.roles.forEach(role => allRoles.add(role)));
+  allResults.forEach(r => (r.roles||[]).forEach(role => allRoles.add(role)));
   const filterRow = document.getElementById('roleFilters');
   filterRow.innerHTML = '<div class="filter-chip ' + (activeFilter==='all'?'active':'') + '" onclick="setFilter(\'all\')">Alle</div>';
   filterRow.innerHTML += [...allRoles].sort().map(r => '<div class="filter-chip ' + (activeFilter===r?'active':'') + '" onclick="setFilter(\'' + r + '\')">' + r + '</div>').join('');
@@ -92,7 +93,7 @@ function setFilter(role) {
 
 function renderResults() {
   const list = document.getElementById('resultsList');
-  const filtered = activeFilter === 'all' ? allResults : allResults.filter(r => r.roles.includes(activeFilter));
+  const filtered = activeFilter === 'all' ? allResults : allResults.filter(r => (r.roles||[]).includes(activeFilter));
   document.getElementById('totalCount').textContent = filtered.length;
   if (filtered.length === 0) {
     list.innerHTML = '<div class="empty">Noch keine Ergebnisse' + (activeFilter !== 'all' ? ' für "' + activeFilter + '"' : '') + '.</div>';
@@ -105,9 +106,10 @@ function renderResults() {
     const answers = Object.entries(r.answers || {}).map(([k,v]) => '<div class="entry-answer"><strong>' + k + ':</strong> ' + (Array.isArray(v) ? v.join(', ') : v) + '</div>').join('');
     return '<div class="result-entry">' +
       '<div class="entry-header">' +
-        '<div class="entry-roles">' + r.roles.map(role => '<span class="chip">' + role + '</span>').join('') + '</div>' +
+        '<div class="entry-name">' + escHtml(r.name || 'Anonym') + '</div>' +
         '<div>' + (r.appType ? '<span class="chip app">' + (appTypeLabel[r.appType] || r.appType) + '</span>' : '') + '</div>' +
       '</div>' +
+      '<div class="entry-roles">' + (r.roles||[]).map(role => '<span class="chip">' + role + '</span>').join('') + '</div>' +
       (answers ? '<div class="entry-answers">' + answers + '</div>' : '') +
       (r.feedback ? '<div class="entry-feedback">💬 ' + escHtml(r.feedback) + '</div>' : '') +
       '<div class="entry-time">📅 ' + timeStr + '</div>' +
@@ -117,10 +119,11 @@ function renderResults() {
 
 function exportCSV() {
   if (allResults.length === 0) return alert('Keine Daten zum Exportieren.');
-  const rows = [['Timestamp','Rollen','AppType','Feedback']];
+  const rows = [['Timestamp','Name','Rollen','AppType','Feedback']];
   allResults.forEach(r => {
     rows.push([
       new Date(r.timestamp).toLocaleString('de-DE'),
+      (r.name||''),
       (r.roles||[]).join('; '),
       r.appType || '',
       (r.feedback||'').replace(/\n/g,' ')
@@ -138,7 +141,7 @@ function escHtml(str) {
 }
 
 loadResults();
-setInterval(loadResults, 30000); // Auto-refresh every 30s
+setInterval(loadResults, 30000);
 </script>
 </body>
 </html>
