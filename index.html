@@ -22,7 +22,7 @@
     .option { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.9rem 1rem; background: #1e293b; border: 2px solid #334155; border-radius: 12px; cursor: pointer; transition: all 0.18s; }
     .option:hover { border-color: #3b82f6; }
     .option.selected { border-color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
-    .option input[type="radio"], .option input[type="checkbox"] { display: none; }
+    .option input { display: none; }
     .check-box { width: 22px; height: 22px; border: 2px solid #475569; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; transition: all 0.18s; }
     .option.selected .check-box { background: #3b82f6; border-color: #3b82f6; }
     .option.selected .check-box::after { content: ''; width: 6px; height: 10px; border: 2px solid white; border-top: none; border-left: none; transform: rotate(45deg) translateY(-1px); display: block; }
@@ -54,140 +54,62 @@
     .btn-copy { background: #3b82f6; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; margin-top: 0.75rem; }
     .btn-copy:hover { background: #2563eb; }
     .done-badge { display: inline-block; background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; padding: 0.25rem 0.8rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; margin-bottom: 1rem; }
-    .copy-msg { color: #10b981; font-size: 0.85rem; margin-top: 0.5rem; }
-    .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-bottom: 0.75rem; }
-    @media (max-width: 480px) { .role-grid, .summary-grid { grid-template-columns: 1fr 1fr; } }
+    .roles-preview { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 0.85rem 1rem; margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    @media (max-width: 480px) { .role-grid { grid-template-columns: 1fr 1fr; } }
   </style>
 </head>
 <body>
 <div class="container">
   <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
 
-  <!-- Step 1: Role (multi-select) -->
+  <!-- Step 1: Role selection -->
   <div class="step active" data-step="1">
-    <div class="step-label">Frage 1 von 5</div>
-    <div class="question">Welche Rolle(n) hast du im Verein? <span style="font-weight:400;font-size:0.9rem;color:#64748b">(Mehrfachauswahl möglich)</span></div>
+    <div class="step-label">Frage 1 — Rollen</div>
+    <div class="question">Welche Rolle(n) hast du im Verein?</div>
     <div class="role-grid">
       <label class="role-card" onclick="toggleRole('Spieler*in', this)">
-        <input type="checkbox" name="role" value="Spieler*in">
+        <input type="checkbox" value="Spieler*in">
         <div class="role-icon">🧑‍🤝‍🧑</div>
         <div class="role-name">Spieler*in</div>
       </label>
       <label class="role-card" onclick="toggleRole('Trainer*in', this)">
-        <input type="checkbox" name="role" value="Trainer*in">
+        <input type="checkbox" value="Trainer*in">
         <div class="role-icon">🏃</div>
         <div class="role-name">Trainer*in</div>
       </label>
       <label class="role-card" onclick="toggleRole('Eltern', this)">
-        <input type="checkbox" name="role" value="Eltern">
+        <input type="checkbox" value="Eltern">
         <div class="role-icon">👨‍👩‍👧</div>
         <div class="role-name">Eltern</div>
       </label>
       <label class="role-card" onclick="toggleRole('Vorstand', this)">
-        <input type="checkbox" name="role" value="Vorstand">
+        <input type="checkbox" value="Vorstand">
         <div class="role-icon">📋</div>
         <div class="role-name">Vorstand</div>
       </label>
       <label class="role-card" onclick="toggleRole('Schiedsrichter*in', this)">
-        <input type="checkbox" name="role" value="Schiedsrichter*in">
+        <input type="checkbox" value="Schiedsrichter*in">
         <div class="role-icon">🏅</div>
         <div class="role-name">Schiedsrichter*in</div>
       </label>
       <label class="role-card" onclick="toggleRole('Helfer*in', this)">
-        <input type="checkbox" name="role" value="Helfer*in">
+        <input type="checkbox" value="Helfer*in">
         <div class="role-icon">🤝</div>
         <div class="role-name">Helfer*in</div>
       </label>
     </div>
     <div class="hint-text">Wähle alles, was auf dich zutrifft.</div>
     <div class="btn-row">
-      <button class="btn btn-primary btn-disabled" id="btn1" onclick="goNext(1)">Weiter</button>
+      <button class="btn btn-primary btn-disabled" id="btn1" onclick="startConditional()">Weiter</button>
     </div>
   </div>
 
-  <!-- Step 2: Problems -->
-  <div class="step" data-step="2">
-    <div class="step-label">Frage 2 von 5</div>
-    <div class="question">Was ist aktuell euer größtes Problem bei der Organisation?</div>
-    <div class="options">
-      <label class="option" onclick="toggleCheck('problem','spielplan',this)">
-        <input type="checkbox" name="problem" value="spielplan"><div class="check-box"></div>
-        <div><div class="option-text">Spielplan nicht sichtbar / aktuell</div><div class="option-desc">Kein zentraler Spielplan den alle sehen</div></div>
-      </label>
-      <label class="option" onclick="toggleCheck('problem','absagen',this)">
-        <input type="checkbox" name="problem" value="absagen"><div class="check-box"></div>
-        <div><div class="option-text">Zu-/Absagen sind chaotisch</div><div class="option-desc">Wer kommt zum Training? Keiner weiß Bescheid</div></div>
-      </label>
-      <label class="option" onclick="toggleCheck('problem','halle',this)">
-        <input type="checkbox" name="problem" value="halle"><div class="check-box"></div>
-        <div><div class="option-text">Hallen-Belegung unklar</div><div class="option-desc">Wann ist welche Halle frei? Wer hat gebucht?</div></div>
-      </label>
-      <label class="option" onclick="toggleCheck('problem','aufgaben',this)">
-        <input type="checkbox" name="problem" value="aufgaben"><div class="check-box"></div>
-        <div><div class="option-text">Aufgaben werden vergessen</div><div class="option-desc">Halle aufbauen, Bälle mitbringen, Schiedsrichter</div></div>
-      </label>
-      <label class="option" onclick="toggleCheck('problem','kommunikation',this)">
-        <input type="checkbox" name="problem" value="kommunikation"><div class="check-box"></div>
-        <div><div class="option-text">WhatsApp-Kommunikation ist unübersichtlich</div><div class="option-desc">Wichtige Infos gehen unter, kein Überblick</div></div>
-      </label>
-      <label class="option" onclick="toggleCheck('problem','statistik',this)">
-        <input type="checkbox" name="problem" value="statistik"><div class="check-box"></div>
-        <div><div class="option-text">Keine Statistiken / Auswertungen</div><div class="option-desc">Trainingsbeteiligung, Torquoten, etc.</div></div>
-      </label>
-    </div>
-    <div class="btn-row">
-      <button class="btn btn-secondary" onclick="goPrev(2)">Zurück</button>
-      <button class="btn btn-primary btn-disabled" id="btn2" onclick="goNext(2)">Weiter</button>
-    </div>
-  </div>
+  <!-- Dynamic questions step (generated by JS) -->
+  <div class="step" data-step="2" id="dynamicStep"></div>
 
-  <!-- Step 3: Features -->
+  <!-- Step: App type -->
   <div class="step" data-step="3">
-    <div class="step-label">Frage 3 von 5</div>
-    <div class="question">Welche Features sind am wichtigsten?</div>
-    <div class="options">
-      <label class="option" onclick="toggleCheck('feature','hallenplan',this)">
-        <input type="checkbox" name="feature" value="hallenplan"><div class="check-box"></div>
-        <div><div class="option-text">🗓️ Hallen-Belegungsplan</div><div class="option-desc">Auf einen Blick: wer nutzt wann welche Halle</div></div>
-      </label>
-      <label class="option" onclick="toggleCheck('feature','spielplan',this)">
-        <input type="checkbox" name="feature" value="spielplan"><div class="check-box"></div>
-        <div><div class="option-text">📅 Spielplan auf einen Blick</div><div class="option-desc">Alle Spiele & Termine zentral</div></div>
-      </label>
-      <label class="option" onclick="toggleCheck('feature','zusage',this)">
-        <input type="checkbox" name="feature" value="zusage"><div class="check-box"></div>
-        <div><div class="option-text">✅ Echtzeit Zu-/Absagen</div><div class="option-desc">Spieler melden sich ab — Trainer sieht live wer kommt</div></div>
-      </label>
-      <label class="option" onclick="toggleCheck('feature','aufgaben',this)">
-        <input type="checkbox" name="feature" value="aufgaben"><div class="check-box"></div>
-        <div><div class="option-text">📋 Aufgaben-/Dienstplan</div><div class="option-desc">Wer räumt auf? Schiedsrichter? Bälle?</div></div>
-      </label>
-      <label class="option" onclick="toggleCheck('feature','lineup',this)">
-        <input type="checkbox" name="feature" value="lineup"><div class="check-box"></div>
-        <div><div class="option-text">⚙️ Aufstellungs-Planung (Lineup)</div><div class="option-desc">Vor dem Spiel: Wer spielt? Formation?</div></div>
-      </label>
-      <label class="option" onclick="toggleCheck('feature','teamkasse',this)">
-        <input type="checkbox" name="feature" value="teamkasse"><div class="check-box"></div>
-        <div><div class="option-text">💰 Teamkasse / Finanzen</div><div class="option-desc">Beiträge, Strafen, Ausgaben transparent</div></div>
-      </label>
-      <label class="option" onclick="toggleCheck('feature','import',this)">
-        <input type="checkbox" name="feature" value="import"><div class="check-box"></div>
-        <div><div class="option-text">🔄 Spielplan-Import (handball.net)</div><div class="option-desc">Automatisch von handball.net übernehmen</div></div>
-      </label>
-      <label class="option" onclick="toggleCheck('feature','chat',this)">
-        <input type="checkbox" name="feature" value="chat"><div class="check-box"></div>
-        <div><div class="option-text">💬 Chat / Umfragen</div><div class="option-desc">Kurze Abstimmungen ohne WhatsApp-Chaos</div></div>
-      </label>
-    </div>
-    <div class="btn-row">
-      <button class="btn btn-secondary" onclick="goPrev(3)">Zurück</button>
-      <button class="btn btn-primary btn-disabled" id="btn3" onclick="goNext(3)">Weiter</button>
-    </div>
-  </div>
-
-  <!-- Step 4: App Type -->
-  <div class="step" data-step="4">
-    <div class="step-label">Frage 4 von 5</div>
+    <div class="step-label" id="appStepLabel">Frage X von Y</div>
     <div class="question">App oder Web-App — was wäre besser?</div>
     <div class="options">
       <label class="option" onclick="selectAppType('app',this)">
@@ -204,25 +126,25 @@
       </label>
     </div>
     <div class="btn-row">
-      <button class="btn btn-secondary" onclick="goPrev(4)">Zurück</button>
-      <button class="btn btn-primary btn-disabled" id="btn4" onclick="goNext(4)">Weiter</button>
+      <button class="btn btn-secondary" onclick="goPrev(3)">Zurück</button>
+      <button class="btn btn-primary btn-disabled" id="btn3" onclick="goNext(3)">Weiter</button>
     </div>
   </div>
 
-  <!-- Step 5: Feedback -->
-  <div class="step" data-step="5">
-    <div class="step-label">Frage 5 von 5</div>
+  <!-- Step: Feedback -->
+  <div class="step" data-step="4">
+    <div class="step-label" id="feedbackStepLabel">Frage X von Y</div>
     <div class="question">Was fehlt aktuell komplett? Was würdet ihr anders machen?</div>
     <textarea id="feedback" placeholder="z.B. Wir wünschen uns eine Integration mit dem Handball-Bund..."></textarea>
     <div class="hint">Alles was ihr denkt — egal ob groß oder klein.</div>
     <div class="btn-row">
-      <button class="btn btn-secondary" onclick="goPrev(5)">Zurück</button>
+      <button class="btn btn-secondary" onclick="goPrev(4)">Zurück</button>
       <button class="btn btn-primary" onclick="finishSurvey()">Ergebnis anzeigen</button>
     </div>
   </div>
 
-  <!-- Step 6: Results -->
-  <div class="step" data-step="6">
+  <!-- Step 5: Results -->
+  <div class="step" data-step="5">
     <div class="done-badge">Umfrage abgeschlossen!</div>
     <h1>Dein Feedback</h1>
     <p class="subtitle">Kopiere das Ergebnis und sende es an Michael.</p>
@@ -235,30 +157,67 @@
 </div>
 
 <script>
-const STORAGE_KEY = 'hb-survey-v2';
-const state = { roles: [], problems: [], features: [], appType: '', feedback: '' };
+// ─── Question Bank ────────────────────────────────────────────────────────────
+// Each question has: id, text, roles[] (empty = all), options[]
+const QUESTIONS = [
+  // SPILER
+  { id: 'position', roles: ['Spieler*in'], text: 'Welche Position spielst du?',
+    options: [{v:'Tor',d:'Torwart'}, {v:'Außen',d:'Links/Rechts Außen'}, {v:'Rückraum',d:'Rückraum Mitte oder Außen'}, {v:'Kreis',d:'Kreis (T pivot)'}, {v:'alle',d:'Ich spiele überall mit'}] },
+  { id: 'training', roles: ['Spieler*in'], text: 'Wie oft trainierst du normalerweise?',
+    options: [{v:'1x',d:'1x pro Woche'}, {v:'2x',d:'2x pro Woche'}, {v:'3x+',d:'3x oder mehr pro Woche'}] },
+  { id: 'spass', roles: ['Spieler*in'], text: 'Was macht dir am meisten Spaß?',
+    options: [{v:'training',d:'Training & Technik'}, {v:'spiele',d:'Die Spiele'}, {v:'team',d:'Teambuilding & Zusammenhalt'}, {v:'wettkampf',d:'Wettkampf & Erfolg'}] },
+  // TRAINER
+  { id: 'aufstellung', roles: ['Trainer*in'], text: 'Planst du Aufstellungen / Formationen vor Spielen?',
+    options: [{v:'nie',d:'Nein, nie'}, {v:'selten',d:'Selten, ad hoc'}, {v:'immer',d:'Ja, immer im Voraus'}, {v:'digital',d:'Ja, digital (Excel, etc.)'}] },
+  { id: 'training-plan', roles: ['Trainer*in'], text: 'Wie planst du dein Training?',
+    options: [{v:'spontan',d:'Spontan vor Ort'}, {v:'notizen',d:'Grobe Notizen'}, {v:'strukturiert',d:'Strukturierter Trainingsplan'}] },
+  { id: 'schwierig', roles: ['Trainer*in'], text: 'Was ist beim Trainieren am schwierigsten?',
+    options: [{v:'zeiten',d:'Verfügbarkeit der Spieler'}, {v:'halle',d:'Hallen-Belegung / Buchung'}, {v:'motivation',d:'Motivation & Beteiligung'}, {v:'konzept',d:'Trainingskonzept entwickeln'}] },
+  // ELTERN
+  { id: 'fahrdienst', roles: ['Eltern'], text: 'Bietest du Fahrdienste zu Spielen an?',
+    options: [{v:'ja',d:'Ja, regelmäßig'}, {v:'manchmal',d:'Ja, manchmal'}, {v:'selten',d:'Selten'}, {v:'nein',d:'Leider nicht möglich'}] },
+  { id: 'komm-eltern', roles: ['Eltern'], text: 'Wie möchtest du über Termine informiert werden?',
+    options: [{v:'push',d:'Push-Benachrichtigung'}, {v:'email',d:'Email'}, {v:'gruppe',d:'WhatsApp Gruppe'}, {v:'app',d:'In einer App'}] },
+  // VORSTAND
+  { id: 'mitglieder', roles: ['Vorstand'], text: 'Wie viele aktive Mitglieder hat der Verein?',
+    options: [{v:'<50',d:'unter 50'}, {v:'50-150',d:'50–150'}, {v:'150-300',d:'150–300'}, {v:'>300',d:'über 300'}] },
+  { id: 'budget', roles: ['Vorstand'], text: 'Wie groß ist das Jahresbudget für die Handball-Abteilung?',
+    options: [{v:'<5k',d:'unter 5.000 €'}, {v:'5k-20k',d:'5.000–20.000 €'}, {v:'>20k',d:'über 20.000 €'}] },
+  { id: 'verwaltung', roles: ['Vorstand'], text: 'Was nimmt am meisten Verwaltungsaufwand weg?',
+    options: [{v:'spielplan',d:'Spielplan veröffentlichen'}, {v:'halle',d:'Hallen-Belegung'}, {v:'mitglieder',d:'Mitgliederverwaltung'}, {v:'finanzen',d:'Finanzen & Beiträge'}] },
+  // SCHIEDSRICHTER
+  { id: 'verfuegbar', roles: ['Schiedsrichter*in'], text: 'Wie oft pfeifst du pro Saison?',
+    options: [{v:'gelegentlich',d:'Gelegentlich (bis 5 Spiele)'}, {v:'regelmaessig',d:'Regelmäßig (5–20 Spiele)'}, {v:'viele',d:'Viele Spiele (20+)'}] },
+  { id: 'schieds-komm', roles: ['Schiedsrichter*in'], text: 'Was würde dir am meisten helfen?',
+    options: [{v:'app',d:'Eigene App für Schiedsrichter'}, {v:'verguetung',d:'Bessere Vergütung'}, {v:'planung',d:'Bessere Spielplanung'}, {v:'schulung',d:'Online-Schulungen'}] },
+  // HELFER
+  { id: 'taetigkeiten', roles: ['Helfer*in'], text: 'Bei welchen Aufgaben hilfst du?',
+    options: [{v:' Getränke',d:'Getränkeausschank'}, {v:' Kasse',d:'Kasse / Einlas'}, {v:' Halle',d:'Hallenaufbau'}, {v:' Werbung',d:'Öffentlichkeitsarbeit / Social Media'}] },
+  { id: 'verfuegbar-h', roles: ['Helfer*in'], text: 'Wie oft im Monat kannst du helfen?',
+    options: [{v:'1x',d:'Ca. 1x pro Monat'}, {v:'2-3x',d:'2–3x pro Monat'}, {v:'4x+',d:'Öfter'}] },
+];
 
-function updateProgress(step) {
-  document.getElementById('progress').style.width = Math.round((step / 5) * 100) + '%';
+// ─── State ────────────────────────────────────────────────────────────────────
+const STORAGE_KEY = 'hb-survey-v3';
+const state = { roles: [], answers: {}, appType: '', feedback: '' };
+let totalDynamicSteps = 0;
+let currentDynamicIdx = 0;
+let dynamicQuestions = [];
+
+function updateProgress(step, total) {
+  const pct = total > 0 ? Math.round((step / total) * 100) : 0;
+  document.getElementById('progress').style.width = pct + '%';
 }
 
 function showStep(n) {
   document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
   const target = document.querySelector('.step[data-step="' + n + '"]');
   if (target) target.classList.add('active');
-  updateProgress(n);
 }
 
-function goNext(current) {
-  const btn = document.getElementById('btn' + current);
-  if (btn && btn.classList.contains('btn-disabled')) return;
-  showStep(current + 1);
-}
-
-function goPrev(current) { showStep(current - 1); }
-
-function enableBtn(n) {
-  const btn = document.getElementById('btn' + n);
+function enableBtn(id) {
+  const btn = document.getElementById(id);
   if (btn) btn.classList.remove('btn-disabled');
 }
 
@@ -268,29 +227,118 @@ function toggleRole(value, el) {
   el.classList.toggle('selected', input.checked);
   if (input.checked) state.roles.push(value);
   else state.roles = state.roles.filter(v => v !== value);
-  enableBtn(1);
+  enableBtn('btn1');
 }
 
-function toggleCheck(group, value, el) {
+function startConditional() {
+  // Build dynamic question list based on selected roles
+  dynamicQuestions = QUESTIONS.filter(q => q.roles.length === 0 || q.roles.some(r => state.roles.includes(r)));
+  totalDynamicSteps = dynamicQuestions.length;
+  currentDynamicIdx = 0;
+  renderDynamicQuestion();
+  showStep(2);
+  updateProgress(1, 3 + totalDynamicSteps);
+}
+
+function renderDynamicQuestion() {
+  if (currentDynamicIdx >= dynamicQuestions.length) {
+    // Done with dynamic questions → go to app type step
+    showStep(3);
+    const total = 3 + totalDynamicSteps;
+    document.getElementById('appStepLabel').textContent = 'Frage ' + (2 + totalDynamicSteps) + ' von ' + total;
+    updateProgress(2 + totalDynamicSteps, total);
+    return;
+  }
+
+  const q = dynamicQuestions[currentDynamicIdx];
+  const stepNum = 2 + currentDynamicIdx;
+  const total = 3 + totalDynamicSteps;
+  const isRadio = q.options.every(o => !o.d);
+  const isMulti = !isRadio && q.options.length > 3;
+
+  const optsHtml = q.options.map(o => {
+    const inputType = isRadio ? 'radio' : 'checkbox';
+    const tag = isRadio ? 'toggleAnswer' : 'toggleMulti';
+    return `<label class="option" onclick="${tag}('${q.id}','${o.v}',this)">
+      <input type="${inputType}" name="${q.id}" value="${o.v}"><div class="check-box"></div>
+      <div><div class="option-text">${o.v}</div>${o.d ? '<div class="option-desc">' + o.d + '</div>' : ''}</div>
+    </label>`;
+  }).join('');
+
+  const container = document.getElementById('dynamicStep');
+  container.setAttribute('data-step', '2');
+  container.innerHTML = `
+    <div class="step-label">Frage ${stepNum} von ${total}</div>
+    <div class="question">${q.text}</div>
+    <div class="options">${optsHtml}</div>
+    <div class="btn-row">
+      ${currentDynamicIdx > 0 ? '<button class="btn btn-secondary" onclick="prevDynamic()">Zurück</button>' : '<div style="flex:1"></div>'}
+      <button class="btn btn-primary btn-disabled" id="dynBtn" onclick="nextDynamic()">Weiter</button>
+    </div>
+  `;
+  container.classList.add('active');
+  showStep(2);
+  updateProgress(stepNum, total);
+}
+
+function toggleAnswer(qId, value, el) {
+  // Single-select: clear others, select this
+  el.closest('.options').querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  state.answers[qId] = value;
+  enableBtn('dynBtn');
+}
+
+function toggleMulti(qId, value, el) {
   const input = el.querySelector('input');
   input.checked = !input.checked;
   el.classList.toggle('selected', input.checked);
-  if (group === 'problem') {
-    if (input.checked) state.problems.push(value);
-    else state.problems = state.problems.filter(v => v !== value);
-    enableBtn(2);
-  } else {
-    if (input.checked) state.features.push(value);
-    else state.features = state.features.filter(v => v !== value);
-    enableBtn(3);
+  if (!state.answers[qId]) state.answers[qId] = [];
+  if (input.checked) state.answers[qId].push(value);
+  else state.answers[qId] = state.answers[qId].filter(v => v !== value);
+  const hasAny = state.answers[qId] && state.answers[qId].length > 0;
+  const btn = document.getElementById('dynBtn');
+  if (hasAny) btn.classList.remove('btn-disabled');
+  else btn.classList.add('btn-disabled');
+}
+
+function nextDynamic() {
+  const btn = document.getElementById('dynBtn');
+  if (btn && btn.classList.contains('btn-disabled')) return;
+  currentDynamicIdx++;
+  renderDynamicQuestion();
+}
+
+function prevDynamic() {
+  if (currentDynamicIdx > 0) {
+    currentDynamicIdx--;
+    renderDynamicQuestion();
   }
 }
 
 function selectAppType(value, el) {
-  document.querySelectorAll('input[name="appType"]').forEach(r => r.closest('.option').classList.remove('selected'));
-  document.querySelector('input[name="appType"][value="' + value + '"]').closest('.option').classList.add('selected');
+  el.closest('.options').querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  el.querySelector('input').checked = true;
   state.appType = value;
-  enableBtn(4);
+  enableBtn('btn3');
+}
+
+function goNext(step) {
+  const btn = document.getElementById('btn' + step);
+  if (btn && btn.classList.contains('btn-disabled')) return;
+  if (step === 3) {
+    // Go to feedback step
+    const total = 3 + totalDynamicSteps;
+    document.getElementById('feedbackStepLabel').textContent = 'Frage ' + (3 + totalDynamicSteps) + ' von ' + total;
+    showStep(4);
+    updateProgress(3 + totalDynamicSteps, total);
+  }
+}
+
+function goPrev(step) {
+  if (step === 3) showStep(2);
+  else if (step === 4) showStep(3);
 }
 
 function finishSurvey() {
@@ -301,15 +349,26 @@ function finishSurvey() {
   try { localStorage.setItem(STORAGE_KEY + '-' + shareId, JSON.stringify(state)); } catch(e) {}
 
   const appTypeLabel = { app: '📱 Eigene App', web: '🌐 Web-App', beides: '🔀 Beides' };
+  const totalSteps = 3 + totalDynamicSteps;
+
+  // Build answer summary
+  let answerHtml = '';
+  dynamicQuestions.forEach(q => {
+    const ans = state.answers[q.id];
+    if (!ans) return;
+    const val = Array.isArray(ans) ? ans.join(', ') : ans;
+    answerHtml += '<div class="result-card"><div class="result-label">' + q.text + '</div><div class="result-value" style="font-size:0.9rem;font-weight:400">' + val + '</div></div>';
+  });
+
   document.getElementById('resultSummary').innerHTML =
-    '<div class="result-card"><div class="result-label">Rolle(n)</div><div class="chip-row">' + (state.roles.length ? state.roles.map(r => '<span class="chip">' + r + '</span>').join('') : '<span style="color:#64748b">-</span>') + '</div></div>' +
+    '<div class="result-card"><div class="result-label">Rolle(n)</div><div class="chip-row">' + state.roles.map(r => '<span class="chip">' + r + '</span>').join('') + '</div></div>' +
+    (answerHtml || '') +
     '<div class="result-card"><div class="result-label">Bevorzugte Lösung</div><div class="result-value">' + (appTypeLabel[state.appType] || '—') + '</div></div>' +
-    (state.problems.length ? '<div class="result-card"><div class="result-label">Probleme</div><div class="chip-row">' + state.problems.map(p => '<span class="chip">' + p + '</span>').join('') + '</div></div>' : '') +
-    (state.features.length ? '<div class="result-card"><div class="result-label">Wichtige Features</div><div class="chip-row">' + state.features.map(f => '<span class="chip">' + f + '</span>').join('') + '</div></div>' : '') +
     (state.feedback ? '<div class="result-card"><div class="result-label">Offenes Feedback</div><div class="result-value" style="font-weight:400;font-size:0.9rem;line-height:1.6;white-space:pre-wrap">' + escHtml(state.feedback) + '</div></div>' : '') +
     '<div class="result-card"><div class="result-label">Ergebnis-Link zum Teilen</div><div class="share-url-box">' + shareUrl + '</div><button class="btn-copy" onclick="navigator.clipboard.writeText(\'' + shareUrl + '\').then(()=>this.textContent=\'Kopiert!\')">🔗 Link kopieren</button></div>';
 
-  showStep(6);
+  showStep(5);
+  updateProgress(1, 1);
   launchConfetti();
 }
 
@@ -318,31 +377,26 @@ function escHtml(str) {
 }
 
 function copyAll() {
-  navigator.clipboard.writeText([
-    'Handball App Umfrage',
-    '====================',
-    'Rolle(n): ' + (state.roles.join(', ') || '-'),
-    'Lösung: ' + state.appType,
-    '',
-    'Probleme:',
-    state.problems.join(', ') || '-',
-    '',
-    'Wichtige Features:',
-    state.features.join(', ') || '-',
-    '',
-    'Offenes Feedback:',
-    state.feedback || '-'
-  ].join('\n'));
+  let text = ['Handball App Umfrage', '====================', 'Rolle(n): ' + state.roles.join(', ')];
+  dynamicQuestions.forEach(q => {
+    const ans = state.answers[q.id];
+    if (ans) text.push(q.text + ': ' + (Array.isArray(ans) ? ans.join(', ') : ans));
+  });
+  text.push('Lösung: ' + state.appType);
+  if (state.feedback) text.push('Feedback: ' + state.feedback);
+  navigator.clipboard.writeText(text.join('\n'));
 }
 
 function resetAll() {
-  state.roles = []; state.problems = []; state.features = []; state.appType = ''; state.feedback = '';
+  state.roles = []; state.answers = {}; state.appType = ''; state.feedback = '';
+  dynamicQuestions = []; currentDynamicIdx = 0; totalDynamicSteps = 0;
   document.querySelectorAll('.role-card, .option').forEach(el => el.classList.remove('selected'));
   document.querySelectorAll('input').forEach(i => i.checked = false);
-  document.querySelectorAll('.btn-primary').forEach(b => { if (!b.onclick || !b.onclick.toString().includes('finish')) b.classList.add('btn-disabled'); });
+  document.querySelectorAll('.btn-primary').forEach(b => b.classList.add('btn-disabled'));
   document.getElementById('feedback').value = '';
   document.getElementById('resultSummary').innerHTML = '';
   showStep(1);
+  updateProgress(0, 1);
 }
 
 function loadShared() {
@@ -359,9 +413,8 @@ function loadShared() {
     '<h1 style="color:#f8fafc;margin-bottom:0.5rem;font-size:1.5rem">Jemand hat dir dieses Feedback gezeigt</h1>' +
     '<p style="color:#94a3b8;margin-bottom:2rem">Fülle auch die Umfrage aus!</p>' +
     '<div class="result-card"><div class="result-label">Rolle(n)</div><div class="chip-row">' + (data.roles && data.roles.length ? data.roles.map(p => '<span class="chip">' + p + '</span>').join('') : '<span style="color:#64748b">-</span>') + '</div></div>' +
+    (data.answers ? Object.entries(data.answers).map(([k, v]) => '<div class="result-card"><div class="result-label">' + k + '</div><div class="result-value" style="font-size:0.9rem;font-weight:400">' + (Array.isArray(v) ? v.join(', ') : v) + '</div></div>').join('') : '') +
     '<div class="result-card"><div class="result-label">Lösung</div><div class="result-value">' + (appTypeLabel[data.appType] || '—') + '</div></div>' +
-    (data.problems && data.problems.length ? '<div class="result-card"><div class="result-label">Probleme</div><div class="chip-row">' + data.problems.map(p => '<span class="chip">' + p + '</span>').join('') + '</div></div>' : '') +
-    (data.features && data.features.length ? '<div class="result-card"><div class="result-label">Wichtige Features</div><div class="chip-row">' + data.features.map(f => '<span class="chip">' + f + '</span>').join('') + '</div></div>' : '') +
     (data.feedback ? '<div class="result-card"><div class="result-label">Feedback</div><div class="result-value" style="font-weight:400;font-size:0.9rem;white-space:pre-wrap">' + escHtml(data.feedback) + '</div></div>' : '') +
     '<button class="btn btn-primary" style="margin-top:1.5rem;width:100%" onclick="window.location.href=window.location.pathname">Eigene Antworten senden</button></div>';
 }
@@ -375,9 +428,9 @@ function launchConfetti() {
     setTimeout(() => el.remove(), 4000);
   }
 }
-const s = document.createElement('style');
-s.textContent = '@keyframes confFall{0%{transform:translateY(0) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}';
-document.head.appendChild(s);
+const ss = document.createElement('style');
+ss.textContent = '@keyframes confFall{0%{transform:translateY(0) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}';
+document.head.appendChild(ss);
 
 loadShared();
 </script>
