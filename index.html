@@ -29,7 +29,7 @@
     .option-text { font-size: 0.95rem; font-weight: 500; }
     .option-desc { font-size: 0.8rem; color: #64748b; margin-top: 3px; line-height: 1.4; }
     .role-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.6rem; margin-bottom: 0.5rem; }
-    .role-card { padding: 0.85rem 0.5rem; background: #1e293b; border: 2px solid #334155; border-radius: 12px; cursor: pointer; text-align: center; transition: all 0.18s; }
+    .role-card { padding: 0.85rem 0.5rem; background: #1e293b; border: 2px solid #334155; border-radius: 12px; cursor: pointer; text-align: center; transition: all 0.18s; appearance: none; -webkit-appearance: none; font-family: inherit; border-style: solid; outline: none; }
     .role-card:hover { border-color: #3b82f6; }
     .role-card.selected { border-color: #3b82f6; background: rgba(59,130,246,0.1); }
     .role-icon { font-size: 1.8rem; margin-bottom: 0.3rem; }
@@ -70,30 +70,30 @@
     <div class="step-label">Frage 1 — Rollen</div>
     <div class="question">Welche Rolle(n) hast du im Verein?</div>
     <div class="role-grid" id="roleGrid">
-      <div class="role-card" data-role="Spieler*in">
+      <button class="role-card" data-role="Spieler*in" type="button">
         <div class="role-icon">🧑‍🤝‍🧑</div>
         <div class="role-name">Spieler*in</div>
-      </div>
-      <div class="role-card" data-role="Trainer*in">
+      </button>
+      <button class="role-card" data-role="Trainer*in" type="button">
         <div class="role-icon">🏃</div>
         <div class="role-name">Trainer*in</div>
-      </div>
-      <div class="role-card" data-role="Eltern">
+      </button>
+      <button class="role-card" data-role="Eltern" type="button">
         <div class="role-icon">👨‍👩‍👧</div>
         <div class="role-name">Eltern</div>
-      </div>
-      <div class="role-card" data-role="Vorstand">
+      </button>
+      <button class="role-card" data-role="Vorstand" type="button">
         <div class="role-icon">📋</div>
         <div class="role-name">Vorstand</div>
-      </div>
-      <div class="role-card" data-role="Schiedsrichter*in">
+      </button>
+      <button class="role-card" data-role="Schiedsrichter*in" type="button">
         <div class="role-icon">🏅</div>
         <div class="role-name">Schiedsrichter*in</div>
-      </div>
-      <div class="role-card" data-role="Helfer*in">
+      </button>
+      <button class="role-card" data-role="Helfer*in" type="button">
         <div class="role-icon">🤝</div>
         <div class="role-name">Helfer*in</div>
-      </div>
+      </button>
     </div>
     <div class="hint-text">Wähle alles, was auf dich zutrifft.</div>
     <div class="btn-row">
