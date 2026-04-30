@@ -32,7 +32,6 @@
     .role-card { padding: 0.85rem 0.5rem; background: #1e293b; border: 2px solid #334155; border-radius: 12px; cursor: pointer; text-align: center; transition: all 0.18s; }
     .role-card:hover { border-color: #3b82f6; }
     .role-card.selected { border-color: #3b82f6; background: rgba(59,130,246,0.1); }
-    .role-card input { display: none; }
     .role-icon { font-size: 1.8rem; margin-bottom: 0.3rem; }
     .role-name { font-weight: 600; font-size: 0.8rem; }
     .btn-row { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
@@ -54,7 +53,11 @@
     .btn-copy { background: #3b82f6; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; margin-top: 0.75rem; }
     .btn-copy:hover { background: #2563eb; }
     .done-badge { display: inline-block; background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; padding: 0.25rem 0.8rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; margin-bottom: 1rem; }
-    .roles-preview { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 0.85rem 1rem; margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .save-indicator { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; margin-top: 0.75rem; color: #10b981; }
+    .save-indicator.saving { color: #f59e0b; }
+    .save-indicator.error { color: #ef4444; }
+    .spinner { width: 14px; height: 14px; border: 2px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: spin 0.6s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
     @media (max-width: 480px) { .role-grid { grid-template-columns: 1fr 1fr; } }
   </style>
 </head>
@@ -133,7 +136,7 @@
     <div class="hint">Alles was ihr denkt — egal ob groß oder klein.</div>
     <div class="btn-row">
       <button class="btn btn-secondary" onclick="goPrev(4)">Zurück</button>
-      <button class="btn btn-primary" onclick="finishSurvey()">Ergebnis anzeigen</button>
+      <button class="btn btn-primary" id="finishBtn" onclick="finishSurvey()">Ergebnis senden</button>
     </div>
   </div>
 
@@ -141,55 +144,52 @@
   <div class="step" data-step="5">
     <div class="done-badge">Umfrage abgeschlossen!</div>
     <h1>Dein Feedback</h1>
-    <p class="subtitle">Kopiere das Ergebnis und sende es an Michael.</p>
+    <p class="subtitle" id="resultSubtitle">Danke fürs Ausfüllen!</p>
     <div id="resultSummary"></div>
+    <div id="saveIndicator" class="save-indicator"></div>
     <div class="btn-row">
-      <button class="btn btn-secondary" onclick="copyAll()">📋 Ergebnis kopieren</button>
+      <button class="btn btn-secondary" onclick="copyAll()">📋 Kopieren</button>
       <button class="btn btn-primary" onclick="resetAll()">Neu starten</button>
     </div>
   </div>
 </div>
 
 <script>
-// ─── Question Bank ────────────────────────────────────────────────────────────
-// Each question has: id, text, roles[] (empty = all), options[]
+// ─── Firebase Config ────────────────────────────────────────────────────────────
+const FIREBASE_URL = 'https://handball-385a3-default-rtdb.europe-west1.firebasedatabase.app';
+
+// ─── Question Bank ─────────────────────────────────────────────────────────────
 const QUESTIONS = [
-  // SPILER
   { id: 'position', roles: ['Spieler*in'], text: 'Welche Position spielst du?',
-    options: [{v:'Tor',d:'Torwart'}, {v:'Außen',d:'Links/Rechts Außen'}, {v:'Rückraum',d:'Rückraum Mitte oder Außen'}, {v:'Kreis',d:'Kreis (T pivot)'}, {v:'alle',d:'Ich spiele überall mit'}] },
+    options: [{v:'Tor',d:'Torwart'},{v:'Außen',d:'Links/Rechts Außen'},{v:'Rückraum',d:'Rückraum Mitte oder Außen'},{v:'Kreis',d:'Kreis (T pivot)'},{v:'alle',d:'Ich spiele überall mit'}] },
   { id: 'training', roles: ['Spieler*in'], text: 'Wie oft trainierst du normalerweise?',
-    options: [{v:'1x',d:'1x pro Woche'}, {v:'2x',d:'2x pro Woche'}, {v:'3x+',d:'3x oder mehr pro Woche'}] },
+    options: [{v:'1x',d:'1x pro Woche'},{v:'2x',d:'2x pro Woche'},{v:'3x+',d:'3x oder mehr pro Woche'}] },
   { id: 'spass', roles: ['Spieler*in'], text: 'Was macht dir am meisten Spaß?',
-    options: [{v:'training',d:'Training & Technik'}, {v:'spiele',d:'Die Spiele'}, {v:'team',d:'Teambuilding & Zusammenhalt'}, {v:'wettkampf',d:'Wettkampf & Erfolg'}] },
-  // TRAINER
+    options: [{v:'training',d:'Training & Technik'},{v:'spiele',d:'Die Spiele'},{v:'team',d:'Teambuilding & Zusammenhalt'},{v:'wettkampf',d:'Wettkampf & Erfolg'}] },
   { id: 'aufstellung', roles: ['Trainer*in'], text: 'Planst du Aufstellungen / Formationen vor Spielen?',
-    options: [{v:'nie',d:'Nein, nie'}, {v:'selten',d:'Selten, ad hoc'}, {v:'immer',d:'Ja, immer im Voraus'}, {v:'digital',d:'Ja, digital (Excel, etc.)'}] },
+    options: [{v:'nie',d:'Nein, nie'},{v:'selten',d:'Selten, ad hoc'},{v:'immer',d:'Ja, immer im Voraus'},{v:'digital',d:'Ja, digital (Excel, etc.)'}] },
   { id: 'training-plan', roles: ['Trainer*in'], text: 'Wie planst du dein Training?',
-    options: [{v:'spontan',d:'Spontan vor Ort'}, {v:'notizen',d:'Grobe Notizen'}, {v:'strukturiert',d:'Strukturierter Trainingsplan'}] },
+    options: [{v:'spontan',d:'Spontan vor Ort'},{v:'notizen',d:'Grobe Notizen'},{v:'strukturiert',d:'Strukturierter Trainingsplan'}] },
   { id: 'schwierig', roles: ['Trainer*in'], text: 'Was ist beim Trainieren am schwierigsten?',
-    options: [{v:'zeiten',d:'Verfügbarkeit der Spieler'}, {v:'halle',d:'Hallen-Belegung / Buchung'}, {v:'motivation',d:'Motivation & Beteiligung'}, {v:'konzept',d:'Trainingskonzept entwickeln'}] },
-  // ELTERN
+    options: [{v:'zeiten',d:'Verfügbarkeit der Spieler'},{v:'halle',d:'Hallen-Belegung / Buchung'},{v:'motivation',d:'Motivation & Beteiligung'},{v:'konzept',d:'Trainingskonzept entwickeln'}] },
   { id: 'fahrdienst', roles: ['Eltern'], text: 'Bietest du Fahrdienste zu Spielen an?',
-    options: [{v:'ja',d:'Ja, regelmäßig'}, {v:'manchmal',d:'Ja, manchmal'}, {v:'selten',d:'Selten'}, {v:'nein',d:'Leider nicht möglich'}] },
+    options: [{v:'ja',d:'Ja, regelmäßig'},{v:'manchmal',d:'Ja, manchmal'},{v:'selten',d:'Selten'},{v:'nein',d:'Leider nicht möglich'}] },
   { id: 'komm-eltern', roles: ['Eltern'], text: 'Wie möchtest du über Termine informiert werden?',
-    options: [{v:'push',d:'Push-Benachrichtigung'}, {v:'email',d:'Email'}, {v:'gruppe',d:'WhatsApp Gruppe'}, {v:'app',d:'In einer App'}] },
-  // VORSTAND
+    options: [{v:'push',d:'Push-Benachrichtigung'},{v:'email',d:'Email'},{v:'gruppe',d:'WhatsApp Gruppe'},{v:'app',d:'In einer App'}] },
   { id: 'mitglieder', roles: ['Vorstand'], text: 'Wie viele aktive Mitglieder hat der Verein?',
-    options: [{v:'<50',d:'unter 50'}, {v:'50-150',d:'50–150'}, {v:'150-300',d:'150–300'}, {v:'>300',d:'über 300'}] },
+    options: [{v:'<50',d:'unter 50'},{v:'50-150',d:'50–150'},{v:'150-300',d:'150–300'},{v:'>300',d:'über 300'}] },
   { id: 'budget', roles: ['Vorstand'], text: 'Wie groß ist das Jahresbudget für die Handball-Abteilung?',
-    options: [{v:'<5k',d:'unter 5.000 €'}, {v:'5k-20k',d:'5.000–20.000 €'}, {v:'>20k',d:'über 20.000 €'}] },
+    options: [{v:'<5k',d:'unter 5.000 €'},{v:'5k-20k',d:'5.000–20.000 €'},{v:'>20k',d:'über 20.000 €'}] },
   { id: 'verwaltung', roles: ['Vorstand'], text: 'Was nimmt am meisten Verwaltungsaufwand weg?',
-    options: [{v:'spielplan',d:'Spielplan veröffentlichen'}, {v:'halle',d:'Hallen-Belegung'}, {v:'mitglieder',d:'Mitgliederverwaltung'}, {v:'finanzen',d:'Finanzen & Beiträge'}] },
-  // SCHIEDSRICHTER
+    options: [{v:'spielplan',d:'Spielplan veröffentlichen'},{v:'halle',d:'Hallen-Belegung'},{v:'mitglieder',d:'Mitgliederverwaltung'},{v:'finanzen',d:'Finanzen & Beiträge'}] },
   { id: 'verfuegbar', roles: ['Schiedsrichter*in'], text: 'Wie oft pfeifst du pro Saison?',
-    options: [{v:'gelegentlich',d:'Gelegentlich (bis 5 Spiele)'}, {v:'regelmaessig',d:'Regelmäßig (5–20 Spiele)'}, {v:'viele',d:'Viele Spiele (20+)'}] },
+    options: [{v:'gelegentlich',d:'Gelegentlich (bis 5 Spiele)'},{v:'regelmaessig',d:'Regelmäßig (5–20 Spiele)'},{v:'viele',d:'Viele Spiele (20+)'}] },
   { id: 'schieds-komm', roles: ['Schiedsrichter*in'], text: 'Was würde dir am meisten helfen?',
-    options: [{v:'app',d:'Eigene App für Schiedsrichter'}, {v:'verguetung',d:'Bessere Vergütung'}, {v:'planung',d:'Bessere Spielplanung'}, {v:'schulung',d:'Online-Schulungen'}] },
-  // HELFER
+    options: [{v:'app',d:'Eigene App für Schiedsrichter'},{v:'verguetung',d:'Bessere Vergütung'},{v:'planung',d:'Bessere Spielplanung'},{v:'schulung',d:'Online-Schulungen'}] },
   { id: 'taetigkeiten', roles: ['Helfer*in'], text: 'Bei welchen Aufgaben hilfst du?',
-    options: [{v:' Getränke',d:'Getränkeausschank'}, {v:' Kasse',d:'Kasse / Einlas'}, {v:' Halle',d:'Hallenaufbau'}, {v:' Werbung',d:'Öffentlichkeitsarbeit / Social Media'}] },
+    options: [{v:'Getränke',d:'Getränkeausschank'},{v:'Kasse',d:'Kasse / Einlass'},{v:'Halle',d:'Hallenaufbau'},{v:'Werbung',d:'Öffentlichkeitsarbeit / Social Media'}] },
   { id: 'verfuegbar-h', roles: ['Helfer*in'], text: 'Wie oft im Monat kannst du helfen?',
-    options: [{v:'1x',d:'Ca. 1x pro Monat'}, {v:'2-3x',d:'2–3x pro Monat'}, {v:'4x+',d:'Öfter'}] },
+    options: [{v:'1x',d:'Ca. 1x pro Monat'},{v:'2-3x',d:'2–3x pro Monat'},{v:'4x+',d:'Öfter'}] },
 ];
 
 // ─── State ────────────────────────────────────────────────────────────────────
@@ -215,7 +215,7 @@ function enableBtn(id) {
   if (btn) btn.classList.remove('btn-disabled');
 }
 
-// Delegated role click — no double-toggle issue
+// ─── Role Selection (Event Delegation) ───────────────────────────────────────
 document.getElementById('roleGrid').addEventListener('click', function(e) {
   const card = e.target.closest('.role-card');
   if (!card) return;
@@ -230,7 +230,7 @@ document.getElementById('roleGrid').addEventListener('click', function(e) {
 });
 
 function startConditional() {
-  // Build dynamic question list based on selected roles
+  if (state.roles.length === 0) return;
   dynamicQuestions = QUESTIONS.filter(q => q.roles.length === 0 || q.roles.some(r => state.roles.includes(r)));
   totalDynamicSteps = dynamicQuestions.length;
   currentDynamicIdx = 0;
@@ -241,7 +241,6 @@ function startConditional() {
 
 function renderDynamicQuestion() {
   if (currentDynamicIdx >= dynamicQuestions.length) {
-    // Done with dynamic questions → go to app type step
     showStep(3);
     const total = 3 + totalDynamicSteps;
     document.getElementById('appStepLabel').textContent = 'Frage ' + (2 + totalDynamicSteps) + ' von ' + total;
@@ -253,7 +252,6 @@ function renderDynamicQuestion() {
   const stepNum = 2 + currentDynamicIdx;
   const total = 3 + totalDynamicSteps;
   const isRadio = q.options.every(o => !o.d);
-  const isMulti = !isRadio && q.options.length > 3;
 
   const optsHtml = q.options.map(o => {
     const inputType = isRadio ? 'radio' : 'checkbox';
@@ -265,7 +263,6 @@ function renderDynamicQuestion() {
   }).join('');
 
   const container = document.getElementById('dynamicStep');
-  container.setAttribute('data-step', '2');
   container.innerHTML = `
     <div class="step-label">Frage ${stepNum} von ${total}</div>
     <div class="question">${q.text}</div>
@@ -275,13 +272,11 @@ function renderDynamicQuestion() {
       <button class="btn btn-primary btn-disabled" id="dynBtn" onclick="nextDynamic()">Weiter</button>
     </div>
   `;
-  container.classList.add('active');
   showStep(2);
   updateProgress(stepNum, total);
 }
 
 function toggleAnswer(qId, value, el) {
-  // Single-select: clear others, select this
   el.closest('.options').querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
   el.classList.add('selected');
   state.answers[qId] = value;
@@ -295,9 +290,8 @@ function toggleMulti(qId, value, el) {
   if (!state.answers[qId]) state.answers[qId] = [];
   if (input.checked) state.answers[qId].push(value);
   else state.answers[qId] = state.answers[qId].filter(v => v !== value);
-  const hasAny = state.answers[qId] && state.answers[qId].length > 0;
   const btn = document.getElementById('dynBtn');
-  if (hasAny) btn.classList.remove('btn-disabled');
+  if (state.answers[qId].length > 0) btn.classList.remove('btn-disabled');
   else btn.classList.add('btn-disabled');
 }
 
@@ -309,16 +303,12 @@ function nextDynamic() {
 }
 
 function prevDynamic() {
-  if (currentDynamicIdx > 0) {
-    currentDynamicIdx--;
-    renderDynamicQuestion();
-  }
+  if (currentDynamicIdx > 0) { currentDynamicIdx--; renderDynamicQuestion(); }
 }
 
 function selectAppType(value, el) {
   el.closest('.options').querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
   el.classList.add('selected');
-  el.querySelector('input').checked = true;
   state.appType = value;
   enableBtn('btn3');
 }
@@ -327,7 +317,6 @@ function goNext(step) {
   const btn = document.getElementById('btn' + step);
   if (btn && btn.classList.contains('btn-disabled')) return;
   if (step === 3) {
-    // Go to feedback step
     const total = 3 + totalDynamicSteps;
     document.getElementById('feedbackStepLabel').textContent = 'Frage ' + (3 + totalDynamicSteps) + ' von ' + total;
     showStep(4);
@@ -340,17 +329,18 @@ function goPrev(step) {
   else if (step === 4) showStep(3);
 }
 
-function finishSurvey() {
+async function finishSurvey() {
+  const finishBtn = document.getElementById('finishBtn');
+  const saveIndicator = document.getElementById('saveIndicator');
+  finishBtn.disabled = true;
+  finishBtn.textContent = 'Senden...';
+  saveIndicator.className = 'save-indicator saving';
+  saveIndicator.innerHTML = '<div class="spinner"></div> Firebase wird gespeichert...';
+
   state.feedback = document.getElementById('feedback').value.trim();
-  const shareId = btoa(JSON.stringify(state)).replace(/[^a-zA-Z0-9]/g, '').substring(0, 20);
-  const baseUrl = window.location.href.split('?')[0];
-  const shareUrl = baseUrl + '?r=' + shareId;
-  try { localStorage.setItem(STORAGE_KEY + '-' + shareId, JSON.stringify(state)); } catch(e) {}
 
+  // Build result display
   const appTypeLabel = { app: '📱 Eigene App', web: '🌐 Web-App', beides: '🔀 Beides' };
-  const totalSteps = 3 + totalDynamicSteps;
-
-  // Build answer summary
   let answerHtml = '';
   dynamicQuestions.forEach(q => {
     const ans = state.answers[q.id];
@@ -363,9 +353,31 @@ function finishSurvey() {
     '<div class="result-card"><div class="result-label">Rolle(n)</div><div class="chip-row">' + state.roles.map(r => '<span class="chip">' + r + '</span>').join('') + '</div></div>' +
     (answerHtml || '') +
     '<div class="result-card"><div class="result-label">Bevorzugte Lösung</div><div class="result-value">' + (appTypeLabel[state.appType] || '—') + '</div></div>' +
-    (state.feedback ? '<div class="result-card"><div class="result-label">Offenes Feedback</div><div class="result-value" style="font-weight:400;font-size:0.9rem;line-height:1.6;white-space:pre-wrap">' + escHtml(state.feedback) + '</div></div>' : '') +
-    '<div class="result-card"><div class="result-label">Ergebnis-Link zum Teilen</div><div class="share-url-box">' + shareUrl + '</div><button class="btn-copy" onclick="navigator.clipboard.writeText(\'' + shareUrl + '\').then(()=>this.textContent=\'Kopiert!\')">🔗 Link kopieren</button></div>';
+    (state.feedback ? '<div class="result-card"><div class="result-label">Offenes Feedback</div><div class="result-value" style="font-weight:400;font-size:0.9rem;line-height:1.6;white-space:pre-wrap">' + escHtml(state.feedback) + '</div></div>' : '');
 
+  // Firebase: POST result
+  try {
+    const payload = {
+      roles: state.roles,
+      answers: state.answers,
+      appType: state.appType,
+      feedback: state.feedback,
+      timestamp: Date.now()
+    };
+    const res = await fetch(FIREBASE_URL + '/results.json', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    saveIndicator.className = 'save-indicator';
+    saveIndicator.innerHTML = '✅ Gespeichert in Firebase';
+  } catch(err) {
+    saveIndicator.className = 'save-indicator error';
+    saveIndicator.innerHTML = '⚠️ Lokal gespeichert (Firebase offline)';
+  }
+
+  finishBtn.textContent = 'Ergebnis senden';
   showStep(5);
   updateProgress(1, 1);
   launchConfetti();
@@ -394,28 +406,10 @@ function resetAll() {
   document.querySelectorAll('.btn-primary').forEach(b => b.classList.add('btn-disabled'));
   document.getElementById('feedback').value = '';
   document.getElementById('resultSummary').innerHTML = '';
+  document.getElementById('saveIndicator').innerHTML = '';
+  document.getElementById('resultSubtitle').textContent = 'Danke fürs Ausfüllen!';
   showStep(1);
   updateProgress(0, 1);
-}
-
-function loadShared() {
-  const params = new URLSearchParams(window.location.search);
-  const r = params.get('r');
-  if (!r) return;
-  let data;
-  try { data = JSON.parse(localStorage.getItem(STORAGE_KEY + '-' + r)); } catch(e) { return; }
-  if (!data) return;
-  const appTypeLabel = { app: '📱 Eigene App', web: '🌐 Web-App', beides: '🔀 Beides' };
-  document.querySelector('.container').innerHTML =
-    '<div style="max-width:600px;margin:2rem auto;padding:0 1.25rem">' +
-    '<div class="done-badge">Geteiltes Ergebnis</div>' +
-    '<h1 style="color:#f8fafc;margin-bottom:0.5rem;font-size:1.5rem">Jemand hat dir dieses Feedback gezeigt</h1>' +
-    '<p style="color:#94a3b8;margin-bottom:2rem">Fülle auch die Umfrage aus!</p>' +
-    '<div class="result-card"><div class="result-label">Rolle(n)</div><div class="chip-row">' + (data.roles && data.roles.length ? data.roles.map(p => '<span class="chip">' + p + '</span>').join('') : '<span style="color:#64748b">-</span>') + '</div></div>' +
-    (data.answers ? Object.entries(data.answers).map(([k, v]) => '<div class="result-card"><div class="result-label">' + k + '</div><div class="result-value" style="font-size:0.9rem;font-weight:400">' + (Array.isArray(v) ? v.join(', ') : v) + '</div></div>').join('') : '') +
-    '<div class="result-card"><div class="result-label">Lösung</div><div class="result-value">' + (appTypeLabel[data.appType] || '—') + '</div></div>' +
-    (data.feedback ? '<div class="result-card"><div class="result-label">Feedback</div><div class="result-value" style="font-weight:400;font-size:0.9rem;white-space:pre-wrap">' + escHtml(data.feedback) + '</div></div>' : '') +
-    '<button class="btn btn-primary" style="margin-top:1.5rem;width:100%" onclick="window.location.href=window.location.pathname">Eigene Antworten senden</button></div>';
 }
 
 function launchConfetti() {
@@ -430,8 +424,6 @@ function launchConfetti() {
 const ss = document.createElement('style');
 ss.textContent = '@keyframes confFall{0%{transform:translateY(0) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}';
 document.head.appendChild(ss);
-
-loadShared();
 </script>
 </body>
 </html>
