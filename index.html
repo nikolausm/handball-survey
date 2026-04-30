@@ -66,37 +66,31 @@
   <div class="step active" data-step="1">
     <div class="step-label">Frage 1 — Rollen</div>
     <div class="question">Welche Rolle(n) hast du im Verein?</div>
-    <div class="role-grid">
-      <label class="role-card" onclick="toggleRole('Spieler*in', this)">
-        <input type="checkbox" value="Spieler*in">
+    <div class="role-grid" id="roleGrid">
+      <div class="role-card" data-role="Spieler*in">
         <div class="role-icon">🧑‍🤝‍🧑</div>
         <div class="role-name">Spieler*in</div>
-      </label>
-      <label class="role-card" onclick="toggleRole('Trainer*in', this)">
-        <input type="checkbox" value="Trainer*in">
+      </div>
+      <div class="role-card" data-role="Trainer*in">
         <div class="role-icon">🏃</div>
         <div class="role-name">Trainer*in</div>
-      </label>
-      <label class="role-card" onclick="toggleRole('Eltern', this)">
-        <input type="checkbox" value="Eltern">
+      </div>
+      <div class="role-card" data-role="Eltern">
         <div class="role-icon">👨‍👩‍👧</div>
         <div class="role-name">Eltern</div>
-      </label>
-      <label class="role-card" onclick="toggleRole('Vorstand', this)">
-        <input type="checkbox" value="Vorstand">
+      </div>
+      <div class="role-card" data-role="Vorstand">
         <div class="role-icon">📋</div>
         <div class="role-name">Vorstand</div>
-      </label>
-      <label class="role-card" onclick="toggleRole('Schiedsrichter*in', this)">
-        <input type="checkbox" value="Schiedsrichter*in">
+      </div>
+      <div class="role-card" data-role="Schiedsrichter*in">
         <div class="role-icon">🏅</div>
         <div class="role-name">Schiedsrichter*in</div>
-      </label>
-      <label class="role-card" onclick="toggleRole('Helfer*in', this)">
-        <input type="checkbox" value="Helfer*in">
+      </div>
+      <div class="role-card" data-role="Helfer*in">
         <div class="role-icon">🤝</div>
         <div class="role-name">Helfer*in</div>
-      </label>
+      </div>
     </div>
     <div class="hint-text">Wähle alles, was auf dich zutrifft.</div>
     <div class="btn-row">
@@ -221,14 +215,19 @@ function enableBtn(id) {
   if (btn) btn.classList.remove('btn-disabled');
 }
 
-function toggleRole(value, el) {
-  const input = el.querySelector('input');
-  input.checked = !input.checked;
-  el.classList.toggle('selected', input.checked);
-  if (input.checked) state.roles.push(value);
-  else state.roles = state.roles.filter(v => v !== value);
+// Delegated role click — no double-toggle issue
+document.getElementById('roleGrid').addEventListener('click', function(e) {
+  const card = e.target.closest('.role-card');
+  if (!card) return;
+  const value = card.dataset.role;
+  card.classList.toggle('selected');
+  if (card.classList.contains('selected')) {
+    if (!state.roles.includes(value)) state.roles.push(value);
+  } else {
+    state.roles = state.roles.filter(v => v !== value);
+  }
   enableBtn('btn1');
-}
+});
 
 function startConditional() {
   // Build dynamic question list based on selected roles
