@@ -28,6 +28,10 @@
     .option.selected .check-box::after { content: ''; width: 6px; height: 10px; border: 2px solid white; border-top: none; border-left: none; transform: rotate(45deg) translateY(-1px); display: block; }
     .option-text { font-size: 0.95rem; font-weight: 500; }
     .option-desc { font-size: 0.8rem; color: #64748b; margin-top: 3px; line-height: 1.4; }
+    .name-input-wrap { margin-bottom: 1.2rem; }
+    .name-input { width: 100%; background: #1e293b; border: 2px solid #334155; border-radius: 10px; color: #e2e8f0; padding: 0.75rem 1rem; font-size: 0.95rem; font-family: inherit; outline: none; transition: border-color 0.18s; }
+    .name-input:focus { border-color: #3b82f6; }
+    .name-input::placeholder { color: #475569; }
     .role-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.6rem; margin-bottom: 0.5rem; }
     .role-card { padding: 0.85rem 0.5rem; background: #1e293b; border: 2px solid #334155; border-radius: 12px; cursor: pointer; text-align: center; transition: all 0.18s; appearance: none; -webkit-appearance: none; font-family: inherit; border-style: solid; outline: none; }
     .role-card:hover { border-color: #3b82f6; }
@@ -65,9 +69,14 @@
 <div class="container">
   <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
 
-  <!-- Step 1: Role selection -->
+  <!-- Step 1: Name + Role selection -->
   <div class="step active" data-step="1">
-    <div class="step-label">Frage 1 — Rollen</div>
+    <div class="step-label">Frage 1 — Dein Name</div>
+    <div class="question">Wie heißt du?</div>
+    <div class="name-input-wrap">
+      <input class="name-input" id="nameInput" type="text" placeholder="Dein Name (oder einfach leer lassen)" autocomplete="off">
+    </div>
+    <div class="step-label" style="margin-top:1rem">Frage 2 — Rollen</div>
     <div class="question">Welche Rolle(n) hast du im Verein?</div>
     <div class="role-grid" id="roleGrid">
       <button class="role-card" data-role="Spieler*in" type="button">
@@ -198,7 +207,7 @@ const QUESTIONS = [
 
 // ─── State ────────────────────────────────────────────────────────────────────
 const STORAGE_KEY = 'hb-survey-v3';
-const state = { roles: [], answers: {}, appType: '', feedback: '' };
+const state = { name: '', ip: '', roles: [], answers: {}, appType: '', feedback: '' };
 let totalDynamicSteps = 0;
 let currentDynamicIdx = 0;
 let dynamicQuestions = [];
@@ -234,6 +243,7 @@ document.getElementById('roleGrid').addEventListener('click', function(e) {
 });
 
 function startConditional() {
+  state.name = document.getElementById('nameInput').value.trim();
   if (state.roles.length === 0) return;
   dynamicQuestions = QUESTIONS.filter(q => q.roles.length === 0 || q.roles.some(r => state.roles.includes(r)));
   totalDynamicSteps = dynamicQuestions.length;
@@ -343,8 +353,20 @@ async function finishSurvey() {
 
   state.feedback = document.getElementById('feedback').value.trim();
 
+  // Fetch IP if no name given
+  let ip = '';
+  if (!state.name) {
+    try {
+      const ipRes = await fetch('https://api.ipify.org?format=json');
+      const ipData = await ipRes.json();
+      ip = ipData.ip || '';
+      state.ip = ip;
+    } catch(e) {}
+  }
+
   // Build result display
   const appTypeLabel = { app: '📱 Eigene App', web: '🌐 Web-App', beides: '🔀 Beides' };
+  const displayName = state.name || (ip ? 'Gast (' + ip + ')' : 'Anonym');
   let answerHtml = '';
   dynamicQuestions.forEach(q => {
     const ans = state.answers[q.id];
@@ -354,6 +376,7 @@ async function finishSurvey() {
   });
 
   document.getElementById('resultSummary').innerHTML =
+    '<div class="result-card"><div class="result-label">Name</div><div class="result-value">' + displayName + '</div></div>' +
     '<div class="result-card"><div class="result-label">Rolle(n)</div><div class="chip-row">' + state.roles.map(r => '<span class="chip">' + r + '</span>').join('') + '</div></div>' +
     (answerHtml || '') +
     '<div class="result-card"><div class="result-label">Bevorzugte Lösung</div><div class="result-value">' + (appTypeLabel[state.appType] || '—') + '</div></div>' +
@@ -362,6 +385,8 @@ async function finishSurvey() {
   // Firebase: POST result
   try {
     const payload = {
+      name: state.name || ('Gast-' + (ip || Date.now())),
+      ip: ip,
       roles: state.roles,
       answers: state.answers,
       appType: state.appType,
@@ -403,12 +428,13 @@ function copyAll() {
 }
 
 function resetAll() {
-  state.roles = []; state.answers = {}; state.appType = ''; state.feedback = '';
+  state.roles = []; state.answers = {}; state.appType = ''; state.feedback = ''; state.ip = '';
   dynamicQuestions = []; currentDynamicIdx = 0; totalDynamicSteps = 0;
   document.querySelectorAll('.role-card, .option').forEach(el => el.classList.remove('selected'));
   document.querySelectorAll('input').forEach(i => i.checked = false);
   document.querySelectorAll('.btn-primary').forEach(b => b.classList.add('btn-disabled'));
   document.getElementById('feedback').value = '';
+  document.getElementById('nameInput').value = '';
   document.getElementById('resultSummary').innerHTML = '';
   document.getElementById('saveIndicator').innerHTML = '';
   document.getElementById('resultSubtitle').textContent = 'Danke fürs Ausfüllen!';
