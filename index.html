@@ -17,6 +17,7 @@
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     .step-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: #475569; margin-bottom: 0.6rem; font-weight: 600; }
     .question { font-size: 1.15rem; font-weight: 600; color: #f1f5f9; margin-bottom: 1.2rem; line-height: 1.4; }
+    .hint-text { font-size: 0.8rem; color: #475569; margin-top: 0.5rem; }
     .options { display: flex; flex-direction: column; gap: 0.55rem; }
     .option { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.9rem 1rem; background: #1e293b; border: 2px solid #334155; border-radius: 12px; cursor: pointer; transition: all 0.18s; }
     .option:hover { border-color: #3b82f6; }
@@ -27,13 +28,13 @@
     .option.selected .check-box::after { content: ''; width: 6px; height: 10px; border: 2px solid white; border-top: none; border-left: none; transform: rotate(45deg) translateY(-1px); display: block; }
     .option-text { font-size: 0.95rem; font-weight: 500; }
     .option-desc { font-size: 0.8rem; color: #64748b; margin-top: 3px; line-height: 1.4; }
-    .role-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-bottom: 0.5rem; }
-    .role-card { padding: 1rem 0.75rem; background: #1e293b; border: 2px solid #334155; border-radius: 12px; cursor: pointer; text-align: center; transition: all 0.18s; }
+    .role-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.6rem; margin-bottom: 0.5rem; }
+    .role-card { padding: 0.85rem 0.5rem; background: #1e293b; border: 2px solid #334155; border-radius: 12px; cursor: pointer; text-align: center; transition: all 0.18s; }
     .role-card:hover { border-color: #3b82f6; }
     .role-card.selected { border-color: #3b82f6; background: rgba(59,130,246,0.1); }
     .role-card input { display: none; }
-    .role-icon { font-size: 2rem; margin-bottom: 0.4rem; }
-    .role-name { font-weight: 600; font-size: 0.85rem; }
+    .role-icon { font-size: 1.8rem; margin-bottom: 0.3rem; }
+    .role-name { font-weight: 600; font-size: 0.8rem; }
     .btn-row { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
     .btn { padding: 0.85rem 1.5rem; border-radius: 10px; font-size: 0.95rem; font-weight: 600; cursor: pointer; border: none; transition: all 0.18s; flex: 1; text-align: center; }
     .btn-primary { background: #3b82f6; color: white; }
@@ -53,53 +54,52 @@
     .btn-copy { background: #3b82f6; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; margin-top: 0.75rem; }
     .btn-copy:hover { background: #2563eb; }
     .done-badge { display: inline-block; background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; padding: 0.25rem 0.8rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; margin-bottom: 1rem; }
-    .share-card { background: #1e293b; border: 1px solid #334155; border-radius: 14px; padding: 1.25rem; margin-top: 1rem; }
-    .copy-msg { color: #10b981; font-size: 0.85rem; margin-top: 0.5rem; display: none; }
-    .intro-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+    .copy-msg { color: #10b981; font-size: 0.85rem; margin-top: 0.5rem; }
     .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-bottom: 0.75rem; }
-    @media (max-width: 480px) { .role-grid, .summary-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 480px) { .role-grid, .summary-grid { grid-template-columns: 1fr 1fr; } }
   </style>
 </head>
 <body>
 <div class="container">
   <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
 
-  <!-- Step 1: Role -->
+  <!-- Step 1: Role (multi-select) -->
   <div class="step active" data-step="1">
     <div class="step-label">Frage 1 von 5</div>
-    <div class="question">Welche Rolle hast du im Verein?</div>
-    <div class="role-grid" id="roleGrid">
-      <label class="role-card" onclick="selectRole(this, 'Spieler*in')">
-        <input type="radio" name="role" value="Spieler*in">
+    <div class="question">Welche Rolle(n) hast du im Verein? <span style="font-weight:400;font-size:0.9rem;color:#64748b">(Mehrfachauswahl möglich)</span></div>
+    <div class="role-grid">
+      <label class="role-card" onclick="toggleRole('Spieler*in', this)">
+        <input type="checkbox" name="role" value="Spieler*in">
         <div class="role-icon">🧑‍🤝‍🧑</div>
         <div class="role-name">Spieler*in</div>
       </label>
-      <label class="role-card" onclick="selectRole(this, 'Trainer*in')">
-        <input type="radio" name="role" value="Trainer*in">
+      <label class="role-card" onclick="toggleRole('Trainer*in', this)">
+        <input type="checkbox" name="role" value="Trainer*in">
         <div class="role-icon">🏃</div>
         <div class="role-name">Trainer*in</div>
       </label>
-      <label class="role-card" onclick="selectRole(this, 'Eltern')">
-        <input type="radio" name="role" value="Eltern">
+      <label class="role-card" onclick="toggleRole('Eltern', this)">
+        <input type="checkbox" name="role" value="Eltern">
         <div class="role-icon">👨‍👩‍👧</div>
         <div class="role-name">Eltern</div>
       </label>
-      <label class="role-card" onclick="selectRole(this, 'Vorstand')">
-        <input type="radio" name="role" value="Vorstand">
+      <label class="role-card" onclick="toggleRole('Vorstand', this)">
+        <input type="checkbox" name="role" value="Vorstand">
         <div class="role-icon">📋</div>
         <div class="role-name">Vorstand</div>
       </label>
-      <label class="role-card" onclick="selectRole(this, 'Schiedsrichter*in')">
-        <input type="radio" name="role" value="Schiedsrichter*in">
+      <label class="role-card" onclick="toggleRole('Schiedsrichter*in', this)">
+        <input type="checkbox" name="role" value="Schiedsrichter*in">
         <div class="role-icon">🏅</div>
         <div class="role-name">Schiedsrichter*in</div>
       </label>
-      <label class="role-card" onclick="selectRole(this, 'Helfer*in')">
-        <input type="radio" name="role" value="Helfer*in">
+      <label class="role-card" onclick="toggleRole('Helfer*in', this)">
+        <input type="checkbox" name="role" value="Helfer*in">
         <div class="role-icon">🤝</div>
         <div class="role-name">Helfer*in</div>
       </label>
     </div>
+    <div class="hint-text">Wähle alles, was auf dich zutrifft.</div>
     <div class="btn-row">
       <button class="btn btn-primary btn-disabled" id="btn1" onclick="goNext(1)">Weiter</button>
     </div>
@@ -110,34 +110,28 @@
     <div class="step-label">Frage 2 von 5</div>
     <div class="question">Was ist aktuell euer größtes Problem bei der Organisation?</div>
     <div class="options">
-      <label class="option" onclick="toggleCheck('problem', 'spielplan', this)">
-        <input type="checkbox" name="problem" value="spielplan">
-        <div class="check-box"></div>
+      <label class="option" onclick="toggleCheck('problem','spielplan',this)">
+        <input type="checkbox" name="problem" value="spielplan"><div class="check-box"></div>
         <div><div class="option-text">Spielplan nicht sichtbar / aktuell</div><div class="option-desc">Kein zentraler Spielplan den alle sehen</div></div>
       </label>
-      <label class="option" onclick="toggleCheck('problem', 'absagen', this)">
-        <input type="checkbox" name="problem" value="absagen">
-        <div class="check-box"></div>
+      <label class="option" onclick="toggleCheck('problem','absagen',this)">
+        <input type="checkbox" name="problem" value="absagen"><div class="check-box"></div>
         <div><div class="option-text">Zu-/Absagen sind chaotisch</div><div class="option-desc">Wer kommt zum Training? Keiner weiß Bescheid</div></div>
       </label>
-      <label class="option" onclick="toggleCheck('problem', 'halle', this)">
-        <input type="checkbox" name="problem" value="halle">
-        <div class="check-box"></div>
+      <label class="option" onclick="toggleCheck('problem','halle',this)">
+        <input type="checkbox" name="problem" value="halle"><div class="check-box"></div>
         <div><div class="option-text">Hallen-Belegung unklar</div><div class="option-desc">Wann ist welche Halle frei? Wer hat gebucht?</div></div>
       </label>
-      <label class="option" onclick="toggleCheck('problem', 'aufgaben', this)">
-        <input type="checkbox" name="problem" value="aufgaben">
-        <div class="check-box"></div>
+      <label class="option" onclick="toggleCheck('problem','aufgaben',this)">
+        <input type="checkbox" name="problem" value="aufgaben"><div class="check-box"></div>
         <div><div class="option-text">Aufgaben werden vergessen</div><div class="option-desc">Halle aufbauen, Bälle mitbringen, Schiedsrichter</div></div>
       </label>
-      <label class="option" onclick="toggleCheck('problem', 'kommunikation', this)">
-        <input type="checkbox" name="problem" value="kommunikation">
-        <div class="check-box"></div>
+      <label class="option" onclick="toggleCheck('problem','kommunikation',this)">
+        <input type="checkbox" name="problem" value="kommunikation"><div class="check-box"></div>
         <div><div class="option-text">WhatsApp-Kommunikation ist unübersichtlich</div><div class="option-desc">Wichtige Infos gehen unter, kein Überblick</div></div>
       </label>
-      <label class="option" onclick="toggleCheck('problem', 'statistik', this)">
-        <input type="checkbox" name="problem" value="statistik">
-        <div class="check-box"></div>
+      <label class="option" onclick="toggleCheck('problem','statistik',this)">
+        <input type="checkbox" name="problem" value="statistik"><div class="check-box"></div>
         <div><div class="option-text">Keine Statistiken / Auswertungen</div><div class="option-desc">Trainingsbeteiligung, Torquoten, etc.</div></div>
       </label>
     </div>
@@ -152,35 +146,35 @@
     <div class="step-label">Frage 3 von 5</div>
     <div class="question">Welche Features sind am wichtigsten?</div>
     <div class="options">
-      <label class="option" onclick="toggleCheck('feature', 'hallenplan', this)">
+      <label class="option" onclick="toggleCheck('feature','hallenplan',this)">
         <input type="checkbox" name="feature" value="hallenplan"><div class="check-box"></div>
         <div><div class="option-text">🗓️ Hallen-Belegungsplan</div><div class="option-desc">Auf einen Blick: wer nutzt wann welche Halle</div></div>
       </label>
-      <label class="option" onclick="toggleCheck('feature', 'spielplan', this)">
+      <label class="option" onclick="toggleCheck('feature','spielplan',this)">
         <input type="checkbox" name="feature" value="spielplan"><div class="check-box"></div>
         <div><div class="option-text">📅 Spielplan auf einen Blick</div><div class="option-desc">Alle Spiele & Termine zentral</div></div>
       </label>
-      <label class="option" onclick="toggleCheck('feature', 'zusage', this)">
+      <label class="option" onclick="toggleCheck('feature','zusage',this)">
         <input type="checkbox" name="feature" value="zusage"><div class="check-box"></div>
         <div><div class="option-text">✅ Echtzeit Zu-/Absagen</div><div class="option-desc">Spieler melden sich ab — Trainer sieht live wer kommt</div></div>
       </label>
-      <label class="option" onclick="toggleCheck('feature', 'aufgaben', this)">
+      <label class="option" onclick="toggleCheck('feature','aufgaben',this)">
         <input type="checkbox" name="feature" value="aufgaben"><div class="check-box"></div>
         <div><div class="option-text">📋 Aufgaben-/Dienstplan</div><div class="option-desc">Wer räumt auf? Schiedsrichter? Bälle?</div></div>
       </label>
-      <label class="option" onclick="toggleCheck('feature', 'lineup', this)">
+      <label class="option" onclick="toggleCheck('feature','lineup',this)">
         <input type="checkbox" name="feature" value="lineup"><div class="check-box"></div>
         <div><div class="option-text">⚙️ Aufstellungs-Planung (Lineup)</div><div class="option-desc">Vor dem Spiel: Wer spielt? Formation?</div></div>
       </label>
-      <label class="option" onclick="toggleCheck('feature', 'teamkasse', this)">
+      <label class="option" onclick="toggleCheck('feature','teamkasse',this)">
         <input type="checkbox" name="feature" value="teamkasse"><div class="check-box"></div>
         <div><div class="option-text">💰 Teamkasse / Finanzen</div><div class="option-desc">Beiträge, Strafen, Ausgaben transparent</div></div>
       </label>
-      <label class="option" onclick="toggleCheck('feature', 'import', this)">
+      <label class="option" onclick="toggleCheck('feature','import',this)">
         <input type="checkbox" name="feature" value="import"><div class="check-box"></div>
         <div><div class="option-text">🔄 Spielplan-Import (handball.net)</div><div class="option-desc">Automatisch von handball.net übernehmen</div></div>
       </label>
-      <label class="option" onclick="toggleCheck('feature', 'chat', this)">
+      <label class="option" onclick="toggleCheck('feature','chat',this)">
         <input type="checkbox" name="feature" value="chat"><div class="check-box"></div>
         <div><div class="option-text">💬 Chat / Umfragen</div><div class="option-desc">Kurze Abstimmungen ohne WhatsApp-Chaos</div></div>
       </label>
@@ -196,15 +190,15 @@
     <div class="step-label">Frage 4 von 5</div>
     <div class="question">App oder Web-App — was wäre besser?</div>
     <div class="options">
-      <label class="option" onclick="selectAppType('app', this)">
+      <label class="option" onclick="selectAppType('app',this)">
         <input type="radio" name="appType" value="app"><div class="check-box"></div>
         <div><div class="option-text">📱 Eigene App (App Store / Google Play)</div><div class="option-desc">Push-Benachrichtigungen, Installation — wie SpielerPlus</div></div>
       </label>
-      <label class="option" onclick="selectAppType('web', this)">
+      <label class="option" onclick="selectAppType('web',this)">
         <input type="radio" name="appType" value="web"><div class="check-box"></div>
         <div><div class="option-text">🌐 Web-App (im Browser, kein Download)</div><div class="option-desc">Über Link öffnen — geht auf jedem Gerät, einfach</div></div>
       </label>
-      <label class="option" onclick="selectAppType('beides', this)">
+      <label class="option" onclick="selectAppType('beides',this)">
         <input type="radio" name="appType" value="beides"><div class="check-box"></div>
         <div><div class="option-text">🔀 Beides (Web zuerst + optionale App)</div><div class="option-desc">Web als Basis, App als Erweiterung</div></div>
       </label>
@@ -241,8 +235,8 @@
 </div>
 
 <script>
-const STORAGE_KEY = 'hb-survey-v1';
-let state = { role: '', problems: [], features: [], appType: '', feedback: '' };
+const STORAGE_KEY = 'hb-survey-v2';
+const state = { roles: [], problems: [], features: [], appType: '', feedback: '' };
 
 function updateProgress(step) {
   document.getElementById('progress').style.width = Math.round((step / 5) * 100) + '%';
@@ -261,19 +255,19 @@ function goNext(current) {
   showStep(current + 1);
 }
 
-function goPrev(current) {
-  showStep(current - 1);
-}
+function goPrev(current) { showStep(current - 1); }
 
 function enableBtn(n) {
   const btn = document.getElementById('btn' + n);
   if (btn) btn.classList.remove('btn-disabled');
 }
 
-function selectRole(el, value) {
-  document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
-  el.classList.add('selected');
-  state.role = value;
+function toggleRole(value, el) {
+  const input = el.querySelector('input');
+  input.checked = !input.checked;
+  el.classList.toggle('selected', input.checked);
+  if (input.checked) state.roles.push(value);
+  else state.roles = state.roles.filter(v => v !== value);
   enableBtn(1);
 }
 
@@ -301,25 +295,19 @@ function selectAppType(value, el) {
 
 function finishSurvey() {
   state.feedback = document.getElementById('feedback').value.trim();
-
-  // Generate share ID
   const shareId = btoa(JSON.stringify(state)).replace(/[^a-zA-Z0-9]/g, '').substring(0, 20);
   const baseUrl = window.location.href.split('?')[0];
   const shareUrl = baseUrl + '?r=' + shareId;
-
-  // Save to localStorage
   try { localStorage.setItem(STORAGE_KEY + '-' + shareId, JSON.stringify(state)); } catch(e) {}
 
-  // Build result summary
   const appTypeLabel = { app: '📱 Eigene App', web: '🌐 Web-App', beides: '🔀 Beides' };
-  const summaryEl = document.getElementById('resultSummary');
-  summaryEl.innerHTML =
-    '<div class="result-card"><div class="result-label">Rolle</div><div class="result-value">' + state.role + '</div></div>' +
+  document.getElementById('resultSummary').innerHTML =
+    '<div class="result-card"><div class="result-label">Rolle(n)</div><div class="chip-row">' + (state.roles.length ? state.roles.map(r => '<span class="chip">' + r + '</span>').join('') : '<span style="color:#64748b">-</span>') + '</div></div>' +
     '<div class="result-card"><div class="result-label">Bevorzugte Lösung</div><div class="result-value">' + (appTypeLabel[state.appType] || '—') + '</div></div>' +
     (state.problems.length ? '<div class="result-card"><div class="result-label">Probleme</div><div class="chip-row">' + state.problems.map(p => '<span class="chip">' + p + '</span>').join('') + '</div></div>' : '') +
     (state.features.length ? '<div class="result-card"><div class="result-label">Wichtige Features</div><div class="chip-row">' + state.features.map(f => '<span class="chip">' + f + '</span>').join('') + '</div></div>' : '') +
     (state.feedback ? '<div class="result-card"><div class="result-label">Offenes Feedback</div><div class="result-value" style="font-weight:400;font-size:0.9rem;line-height:1.6;white-space:pre-wrap">' + escHtml(state.feedback) + '</div></div>' : '') +
-    '<div class="share-card"><div class="result-label">Ergebnis-Link zum Teilen</div><div class="share-url-box">' + shareUrl + '</div><button class="btn-copy" onclick="navigator.clipboard.writeText(\'' + shareUrl + '\').then(()=>this.textContent=\'Kopiert!\')">🔗 Link kopieren</button></div>';
+    '<div class="result-card"><div class="result-label">Ergebnis-Link zum Teilen</div><div class="share-url-box">' + shareUrl + '</div><button class="btn-copy" onclick="navigator.clipboard.writeText(\'' + shareUrl + '\').then(()=>this.textContent=\'Kopiert!\')">🔗 Link kopieren</button></div>';
 
   showStep(6);
   launchConfetti();
@@ -330,10 +318,10 @@ function escHtml(str) {
 }
 
 function copyAll() {
-  const text = [
+  navigator.clipboard.writeText([
     'Handball App Umfrage',
     '====================',
-    'Rolle: ' + state.role,
+    'Rolle(n): ' + (state.roles.join(', ') || '-'),
     'Lösung: ' + state.appType,
     '',
     'Probleme:',
@@ -344,21 +332,19 @@ function copyAll() {
     '',
     'Offenes Feedback:',
     state.feedback || '-'
-  ].join('\n');
-  navigator.clipboard.writeText(text);
+  ].join('\n'));
 }
 
 function resetAll() {
-  state = { role: '', problems: [], features: [], appType: '', feedback: '' };
+  state.roles = []; state.problems = []; state.features = []; state.appType = ''; state.feedback = '';
   document.querySelectorAll('.role-card, .option').forEach(el => el.classList.remove('selected'));
   document.querySelectorAll('input').forEach(i => i.checked = false);
-  document.querySelectorAll('.btn-primary').forEach(b => { if (b.id !== 'btn5') b.classList.add('btn-disabled'); });
+  document.querySelectorAll('.btn-primary').forEach(b => { if (!b.onclick || !b.onclick.toString().includes('finish')) b.classList.add('btn-disabled'); });
   document.getElementById('feedback').value = '';
   document.getElementById('resultSummary').innerHTML = '';
   showStep(1);
 }
 
-// Load shared result
 function loadShared() {
   const params = new URLSearchParams(window.location.search);
   const r = params.get('r');
@@ -366,20 +352,18 @@ function loadShared() {
   let data;
   try { data = JSON.parse(localStorage.getItem(STORAGE_KEY + '-' + r)); } catch(e) { return; }
   if (!data) return;
-
   const appTypeLabel = { app: '📱 Eigene App', web: '🌐 Web-App', beides: '🔀 Beides' };
   document.querySelector('.container').innerHTML =
     '<div style="max-width:600px;margin:2rem auto;padding:0 1.25rem">' +
     '<div class="done-badge">Geteiltes Ergebnis</div>' +
-    '<h1 style="color:#f8fafc;margin-bottom:0.5rem">Jemand hat dir dieses Feedback gezeigt</h1>' +
+    '<h1 style="color:#f8fafc;margin-bottom:0.5rem;font-size:1.5rem">Jemand hat dir dieses Feedback gezeigt</h1>' +
     '<p style="color:#94a3b8;margin-bottom:2rem">Fülle auch die Umfrage aus!</p>' +
-    '<div class="result-card"><div class="result-label">Rolle</div><div class="result-value">' + data.role + '</div></div>' +
+    '<div class="result-card"><div class="result-label">Rolle(n)</div><div class="chip-row">' + (data.roles && data.roles.length ? data.roles.map(p => '<span class="chip">' + p + '</span>').join('') : '<span style="color:#64748b">-</span>') + '</div></div>' +
     '<div class="result-card"><div class="result-label">Lösung</div><div class="result-value">' + (appTypeLabel[data.appType] || '—') + '</div></div>' +
     (data.problems && data.problems.length ? '<div class="result-card"><div class="result-label">Probleme</div><div class="chip-row">' + data.problems.map(p => '<span class="chip">' + p + '</span>').join('') + '</div></div>' : '') +
     (data.features && data.features.length ? '<div class="result-card"><div class="result-label">Wichtige Features</div><div class="chip-row">' + data.features.map(f => '<span class="chip">' + f + '</span>').join('') + '</div></div>' : '') +
     (data.feedback ? '<div class="result-card"><div class="result-label">Feedback</div><div class="result-value" style="font-weight:400;font-size:0.9rem;white-space:pre-wrap">' + escHtml(data.feedback) + '</div></div>' : '') +
-    '<button class="btn btn-primary" style="margin-top:1.5rem;width:100%" onclick="window.location.href=window.location.pathname">Eigene Antworten senden</button>' +
-    '</div>';
+    '<button class="btn btn-primary" style="margin-top:1.5rem;width:100%" onclick="window.location.href=window.location.pathname">Eigene Antworten senden</button></div>';
 }
 
 function launchConfetti() {
@@ -391,9 +375,9 @@ function launchConfetti() {
     setTimeout(() => el.remove(), 4000);
   }
 }
-const style = document.createElement('style');
-style.textContent = '@keyframes confFall{0%{transform:translateY(0) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}';
-document.head.appendChild(style);
+const s = document.createElement('style');
+s.textContent = '@keyframes confFall{0%{transform:translateY(0) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}';
+document.head.appendChild(s);
 
 loadShared();
 </script>
