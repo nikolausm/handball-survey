@@ -248,6 +248,12 @@ const QUESTIONS = [
     options: [{v:'oeffentlich',d:'Ja, alle können mich finden'},{v:'selbst-freigabe',d:'Nur wenn ich es selbst freigebe'},{v:'privat',d:'Nein, lieber komplett privat'}] },
   { id: 'selbstverwaltung', roles: [], text: 'Wer sollte eigene Verfügbarkeit / Aufgaben selbst verwalten können?',
     options: [{v:'alle',d:'Jeder Spieler/Trainer selbst'},{v:'nur-trainer',d:'Nur Trainer stellen ein'},{v:'vorstand',d:'Nur Vorstand verwaltet alles'}] },
+  { id: 'abmeldung', roles: [], text: 'Möchtest du dich für Training und Spiele an- und abmelden können?',
+    options: [{v:'ja-training',d:'Ja, für Training'},{v:'ja-spiele',d:'Ja, für Spiele'},{v:'ja-beides',d:'Ja, für beides'},{v:'nein',d:'Nein, brauche ich nicht'}] },
+  { id: 'hallendienst-planung', roles: [], text: 'Wer sollte Hallendienste (Aufbau, Getränke, Kasse) planen dürfen?',
+    options: [{v:'alle',d:'Alle selbst'},{v:'trainer-vorstand',d:'Trainer & Vorstand'},{v:'nur-vorstand',d:'Nur Vorstand'}] },
+  { id: 'multi-rolle', roles: [], text: 'Soll ein Trainer mehrere Rollen haben können? (z.B. Trainer + Spieler)',
+    options: [{v:'ja',d:'Ja'},{v:'nein',d:'Nein'}] },
   { id: 'features', roles: [], text: 'Welche Features sollten wir priorisieren?',
     options: [{v:'hallenplanung',d:'Hallenplanung & Belegung'},{v:'dienste',d:'Dienste planen (Aufbau, Schiedsrichter, Getränke)'},{v:'mitgliedsbeitraege',d:'Eigene Mitgliedsbeiträge einsehen'},{v:'dokumente',d:'Dokumentenverwaltung (Protokolle, Trainingspläne)'},{v:'fahrgemeinschaften',d:'Fahrgemeinschaften zu Auswärtsspielen'},{v:'spielplan',d:'Spielplan automatisch von handball.net'},{v:'social',d:'Social Media / Sponsoren auf der Website'}] },
 ];
